@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PRINCE2 Theme Map</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:100%;height:100%;overflow:hidden;}
+  body{background:#090c12;font-family:'DM Mono',monospace;color:#cdd5e0;display:flex;flex-direction:column;align-items:center;touch-action:none;}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(80,110,180,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(80,110,180,0.035) 1px,transparent 1px);background-size:28px 28px;pointer-events:none;}
+
+  /* ── HEADER ── */
+  header{flex-shrink:0;text-align:center;padding-top:calc(env(safe-area-inset-top,0px) + 8px);padding-bottom:1px;position:relative;z-index:10;width:100%;display:flex;align-items:center;justify-content:center;gap:0.6rem;}
+  header h1{font-family:'Playfair Display',serif;font-size:clamp(0.65rem,2.8vw,0.92rem);letter-spacing:0.22em;text-transform:uppercase;color:#2e3a52;}
+  header p{font-size:clamp(0.38rem,1.5vw,0.5rem);letter-spacing:0.14em;text-transform:uppercase;color:#1e2636;margin-top:3px;}
+  .header-inner{display:flex;flex-direction:column;align-items:center;}
+
+  /* Accessible mode toggle */
+  .a11y-btn{
+    position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);
+    background:none;border:1px solid #1e2636;border-radius:4px;
+    color:#2e3a52;font-family:'DM Mono',monospace;
+    font-size:clamp(0.32rem,1.2vw,0.42rem);letter-spacing:0.10em;
+    text-transform:uppercase;padding:0.2rem 0.5rem;cursor:pointer;
+    transition:color 0.2s,border-color 0.2s;white-space:nowrap;
+  }
+  .a11y-btn:hover{color:#b0bcd0;border-color:#4a5878;}
+
+  /* ── CANVAS + SIDEBAR LAYOUT ── */
+  .canvas-wrap{flex:1;width:100%;position:relative;min-height:0;}
+  canvas{position:absolute;inset:0;width:100%;height:100%;}
+  .legend{display:flex;gap:2px 7px;flex-wrap:wrap;justify-content:center;padding:3px 8px;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 3px);flex-shrink:0;}
+  .legend-item{display:flex;align-items:center;gap:4px;font-size:clamp(0.38rem,1.5vw,0.52rem);letter-spacing:0.07em;text-transform:uppercase;color:#2e3a52;}
+  .legend-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+
+  /* ── INFO PANEL — mobile: slides up from bottom ── */
+  .info-panel{
+    position:fixed;bottom:0;left:0;right:0;
+    background:#0d1120;border-top:1px solid rgba(80,120,220,0.12);
+    transform:translateY(100%);
+    transition:transform 0.32s cubic-bezier(0.32,0.72,0,1);
+    z-index:100;display:flex;flex-direction:column;max-height:76vh;
+  }
+  .info-panel.visible{transform:translateY(0);}
+
+  /* ── INFO PANEL — desktop (≥900px): left sidebar ── */
+  @media (min-width:900px){
+    body{flex-direction:column;}
+    .info-panel{
+      top:0;bottom:0;left:0;right:auto;
+      width:460px;max-height:100vh;
+      border-top:none;border-right:1px solid rgba(80,120,220,0.12);
+      transform:translateX(-100%);
+      transition:transform 0.36s cubic-bezier(0.32,0.72,0,1);
+      padding-top:calc(env(safe-area-inset-top,0px) + 0px);
+    }
+    .info-panel.visible{transform:translateX(0);}
+    /* canvas fills full wrap; offset handled in JS */
+  }
+
+  .ip-head{display:flex;align-items:center;justify-content:space-between;padding:0.7rem 1.1rem 0;flex-shrink:0;}
+  .ip-title{font-family:'Playfair Display',serif;font-size:clamp(0.88rem,4vw,1.12rem);}
+  .ip-question{font-size:clamp(0.46rem,1.9vw,0.59rem);letter-spacing:0.07em;color:#7a8aaa;margin-top:2px;font-style:italic;}
+  .ip-close{background:none;border:none;color:#6a7a98;font-size:1.1rem;cursor:pointer;padding:0 0 0 0.8rem;flex-shrink:0;align-self:flex-start;}
+  .ip-tabs{display:flex;border-bottom:1px solid rgba(80,120,220,0.1);flex-shrink:0;margin-top:0.55rem;overflow-x:auto;scrollbar-width:none;}
+  .ip-tabs::-webkit-scrollbar{display:none;}
+  .ip-tab{background:none;border:none;border-bottom:2px solid transparent;color:#6a7a98;font-family:'DM Mono',monospace;font-size:clamp(0.38rem,1.6vw,0.52rem);letter-spacing:0.09em;text-transform:uppercase;padding:0.36rem 0.75rem;cursor:pointer;white-space:nowrap;transition:color 0.2s,border-color 0.2s;}
+  .ip-tab.active{color:var(--tc,#fff);border-bottom-color:var(--tc,#fff);}
+  .ip-body{flex:1;overflow-y:auto;padding:0.7rem 1.1rem;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 0.7rem);scrollbar-width:thin;scrollbar-color:#1e2838 transparent;}
+  .ip-pane{display:none;}.ip-pane.active{display:block;}
+
+  /* Overview */
+  .ip-desc{font-size:clamp(0.54rem,2.1vw,0.66rem);color:#8a9ab8;line-height:1.75;letter-spacing:0.03em;margin-bottom:0.75rem;}
+  .ip-tags{display:flex;flex-wrap:wrap;gap:0.28rem;margin-bottom:0.65rem;}
+  .ip-tag{font-size:clamp(0.43rem,1.6vw,0.51rem);letter-spacing:0.07em;padding:0.17rem 0.46rem;border-radius:999px;border:1px solid var(--tc,#fff);color:var(--tc,#fff);opacity:0.85;}
+  .ip-doc{font-size:clamp(0.43rem,1.6vw,0.51rem);letter-spacing:0.1em;text-transform:uppercase;color:#5a6a88;padding-top:0.48rem;border-top:1px solid rgba(80,120,220,0.08);}
+  .ip-doc strong{color:#7a8aa8;font-weight:500;}
+
+
+  /* Quote / trivia block */
+  .ip-quote {
+    margin-top:1.1rem;
+    padding:0.7rem 0.85rem;
+    border-left:2px solid var(--tc,#4a5878);
+    background:rgba(255,255,255,0.025);
+    border-radius:0 5px 5px 0;
+  }
+  .ip-quote-text {
+    font-family:'Playfair Display',serif;
+    font-size:clamp(0.52rem,2vw,0.65rem);
+    color:#8a9ab8;
+    line-height:1.75;
+    font-style:italic;
+    margin-bottom:0.35rem;
+  }
+  .ip-quote-author {
+    font-size:clamp(0.38rem,1.4vw,0.48rem);
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:#4a5878;
+  }
+  .ip-quote-author span {
+    color:var(--tc,#4a5878);
+    opacity:0.7;
+  }
+  /* a11y overrides */
+  body.a11y .ip-quote { background:#f0f0f0; border-left-width:3px; }
+  body.a11y .ip-quote-text { color:#333; font-size:0.78rem; }
+  body.a11y .ip-quote-author { color:#555; font-size:0.62rem; }
+
+  /* Questions */
+  .q-section{font-size:clamp(0.4rem,1.6vw,0.51rem);letter-spacing:0.14em;text-transform:uppercase;color:#6a7a98;margin-bottom:0.45rem;margin-top:0.15rem;}
+  .q-section.post{color:#6a4a6a;}
+  .q-list{list-style:none;margin-bottom:0.85rem;}
+  .q-list li{display:flex;gap:0.5rem;align-items:flex-start;font-size:clamp(0.51rem,2vw,0.62rem);color:#8a9ab8;line-height:1.65;letter-spacing:0.02em;margin-bottom:0.42rem;}
+  .q-list li::before{content:'▸';color:var(--tc,#fff);opacity:0.65;flex-shrink:0;margin-top:1px;font-size:0.52rem;}
+  .q-list.post li::before{color:#b07ab0;opacity:0.7;}
+
+  /* Checklist */
+  .check-list{list-style:none;}
+  .check-list li{display:flex;gap:0.55rem;align-items:flex-start;font-size:clamp(0.51rem,2vw,0.62rem);color:#8a9ab8;line-height:1.6;letter-spacing:0.02em;padding:0.38rem 0;border-bottom:1px solid rgba(80,120,220,0.08);}
+  .check-list li:last-child{border-bottom:none;}
+  .chk{width:14px;height:14px;flex-shrink:0;border-radius:3px;border:1px solid var(--tc,#fff);opacity:0.42;cursor:pointer;margin-top:1px;transition:all 0.15s;display:flex;align-items:center;justify-content:center;}
+  .chk.done{opacity:1;background:var(--tc,#fff);}
+  .chk.done::after{content:'✓';color:#090c12;font-size:9px;font-weight:700;line-height:1;}
+  .check-list li.done-item>span{text-decoration:line-through;opacity:0.35;}
+
+  /* Mistakes */
+  .mistake-list{list-style:none;}
+  .mistake-list li{display:flex;gap:0.6rem;align-items:flex-start;padding:0.5rem 0;border-bottom:1px solid rgba(220,80,80,0.07);}
+  .mistake-list li:last-child{border-bottom:none;}
+  .mistake-icon{flex-shrink:0;font-size:0.7rem;line-height:1.4;opacity:0.7;}
+  .mistake-body strong{display:block;font-size:clamp(0.5rem,1.9vw,0.6rem);font-weight:500;color:#9a7070;margin-bottom:2px;}
+  .mistake-body p{font-size:clamp(0.5rem,1.9vw,0.61rem);color:#8a9ab8;line-height:1.65;letter-spacing:0.02em;}
+
+  /* Owners */
+  .owner-card{background:rgba(255,255,255,0.025);border:1px solid rgba(80,120,220,0.1);border-radius:6px;padding:0.6rem 0.75rem;margin-bottom:0.55rem;}
+  .owner-card:last-child{margin-bottom:0;}
+  .owner-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.25rem;}
+  .owner-name{font-size:clamp(0.52rem,2vw,0.64rem);font-weight:500;color:#b0bcd0;}
+  .owner-badge{font-size:clamp(0.38rem,1.4vw,0.48rem);letter-spacing:0.1em;text-transform:uppercase;padding:0.1rem 0.38rem;border-radius:999px;border:1px solid currentColor;opacity:0.6;}
+  .owner-desc{font-size:clamp(0.49rem,1.9vw,0.6rem);color:#8a9ab8;line-height:1.65;letter-spacing:0.02em;margin-bottom:0.35rem;}
+  .owner-bullets{list-style:none;}
+  .owner-bullets li{display:flex;gap:0.45rem;font-size:clamp(0.47rem,1.8vw,0.58rem);color:#7a8aa8;line-height:1.6;margin-bottom:0.2rem;}
+  .owner-bullets li::before{content:'·';flex-shrink:0;opacity:0.6;}
+  .owner-note{font-size:clamp(0.43rem,1.6vw,0.52rem);color:#4a3a4a;margin-top:0.35rem;font-style:italic;letter-spacing:0.03em;}
+  .ip-subpage-link{display:inline-flex;align-items:center;margin-top:0.75rem;padding:0.3rem 0.7rem;border:1px solid rgba(56,189,248,0.35);border-radius:4px;font-size:clamp(0.4rem,1.6vw,0.52rem);letter-spacing:0.1em;text-transform:uppercase;color:#38bdf8;opacity:0.7;text-decoration:none;transition:opacity 0.2s,border-color 0.2s;}
+  .ip-subpage-link:hover{opacity:1;border-color:rgba(56,189,248,0.7);}
+
+  /* ══════════════════════════════════════════
+     ACCESSIBLE MODE
+  ══════════════════════════════════════════ */
+  body.a11y {
+    background:#f5f5f0;
+    color:#1a1a2e;
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+  body.a11y::before { display:none; }
+  body.a11y header h1 { color:#1a1a2e; font-size:clamp(0.9rem,3vw,1.2rem); }
+  body.a11y header p  { color:#444; }
+  body.a11y .a11y-btn { color:#444; border-color:#aaa; }
+  body.a11y .legend-item { color:#444; }
+
+  /* Panel — bright white, high contrast */
+  body.a11y .info-panel {
+    background:#ffffff;
+    border-color:#ccc;
+    box-shadow: 2px 0 24px rgba(0,0,0,0.12);
+  }
+  body.a11y .ip-title  { font-family: system-ui, sans-serif; font-size:1.3rem; font-weight:700; }
+  body.a11y .ip-question { color:#555; font-size:0.8rem; letter-spacing:0; font-style:italic; }
+  body.a11y .ip-tab   { color:#555; font-family:system-ui,sans-serif; font-size:0.75rem; letter-spacing:0; }
+  body.a11y .ip-tab.active { color:var(--tc,#000); }
+  body.a11y .ip-tabs  { border-color:#ddd; }
+  body.a11y .ip-close { color:#888; }
+
+  body.a11y .ip-desc  { color:#222; font-size:0.82rem; line-height:1.8; letter-spacing:0; font-family:system-ui,sans-serif; }
+  body.a11y .ip-tag   { font-size:0.7rem; letter-spacing:0; opacity:0.9; font-family:system-ui,sans-serif; }
+  body.a11y .ip-doc   { color:#555; font-size:0.7rem; letter-spacing:0; text-transform:none; font-family:system-ui,sans-serif; }
+  body.a11y .ip-doc strong { color:#333; }
+
+  body.a11y .q-section { color:#333; font-size:0.72rem; letter-spacing:0; font-family:system-ui,sans-serif; }
+  body.a11y .q-list li { color:#222; font-size:0.8rem; line-height:1.7; letter-spacing:0; font-family:system-ui,sans-serif; }
+  body.a11y .q-list li::before { opacity:1; }
+
+  body.a11y .check-list li { color:#222; font-size:0.8rem; line-height:1.65; letter-spacing:0; border-color:#eee; font-family:system-ui,sans-serif; }
+  body.a11y .chk { border-width:2px; opacity:0.7; }
+  body.a11y .chk.done { opacity:1; }
+
+  body.a11y .mistake-body strong { color:#b03030; font-size:0.78rem; }
+  body.a11y .mistake-body p { color:#333; font-size:0.78rem; line-height:1.7; letter-spacing:0; font-family:system-ui,sans-serif; }
+  body.a11y .mistake-list li { border-color:rgba(200,100,100,0.15); }
+
+  body.a11y .owner-card { background:#f8f8f8; border-color:#ddd; }
+  body.a11y .owner-name { color:#1a1a2e; font-size:0.82rem; }
+  body.a11y .owner-desc { color:#333; font-size:0.78rem; line-height:1.7; letter-spacing:0; font-family:system-ui,sans-serif; }
+  body.a11y .owner-bullets li { color:#333; font-size:0.76rem; font-family:system-ui,sans-serif; }
+  body.a11y .owner-note { color:#777; font-size:0.7rem; }
+
+  body.a11y .ip-subpage-link { opacity:1; font-size:0.72rem; letter-spacing:0; text-transform:none; font-family:system-ui,sans-serif; border-width:2px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <h1>PRINCE2 Theme Map</h1>
+    <p>8 themes · tap to explore</p>
+  </div>
+    <button class="a11y-btn" id="a11yBtn" title="Toggle accessible reading mode">Aa Mode</button>
+</header>
+<div class="canvas-wrap"><canvas id="c"></canvas></div>
+<div class="legend" id="legend"></div>
+<div class="info-panel" id="infoPanel">
+  <div class="ip-head">
+    <div><div class="ip-title" id="ipTitle"></div><div class="ip-question" id="ipQuestion"></div></div>
+    <button class="ip-close" id="ipClose">✕</button>
+  </div>
+  <div class="ip-tabs" id="ipTabs">
+    <button class="ip-tab active" data-tab="overview">Overview</button>
+    <button class="ip-tab" data-tab="questions">Questions</button>
+    <button class="ip-tab" data-tab="checklist">Checklist</button>
+    <button class="ip-tab" data-tab="mistakes">Mistakes</button>
+    <button class="ip-tab" id="ownerTabBtn" data-tab="owners" style="display:none">Owners</button>
+  </div>
+  <div class="ip-body">
+    <div class="ip-pane active" id="pane-overview"></div>
+    <div class="ip-pane" id="pane-questions"></div>
+    <div class="ip-pane" id="pane-checklist"></div>
+    <div class="ip-pane" id="pane-mistakes"></div>
+    <div class="ip-pane" id="pane-owners"></div>
+  </div>
+</div>
+<script>
+const THEMES = {
+  businessCase: {
+    label:'Business Case', color:'#f59e0b',
+    question:'Why are we doing this project?',
+    desc:'Ensures the project remains desirable, viable and achievable throughout its lifecycle. The Business Case is owned by the Executive and reviewed at every stage boundary. It justifies continued investment and links outcomes to organisational strategy.',
+    subtopics:['Benefits Realisation','Investment Appraisal','Business Justification','Viability','Outcomes vs Outputs'],
+    doc:'Business Case + Benefits Management Approach',
+    initQuestions:[
+      'What problem or opportunity does this project address?',
+      'What are the expected benefits, and how will they be measured?',
+      'What is the cost-to-benefit ratio over the investment horizon?',
+      'Are the benefits achievable within the proposed timeframe?',
+      'What happens to the business if we do NOT do this project?',
+      'Who is accountable for realising the benefits after delivery?',
+    ],
+    doingQuestions:[
+      'Is the business case still valid at this stage boundary?',
+      'Have any benefits become unachievable due to changes in scope or cost?',
+      'Are actual costs tracking against the approved forecast?',
+      'Have any new disbenefits emerged that outweigh the projected gains?',
+      'Does the Executive still sponsor and champion the project?',
+      'Should the project be stopped, adjusted, or continued as planned?',
+    ],
+    postQuestions:[
+      'Were the forecast benefits actually realised, and by how much did they differ from the plan?',
+      'Has the Benefits Management Approach been handed over to the Senior User or corporate management for ongoing review?',
+      'Have benefits review dates been scheduled and resourced in the months/years after closure?',
+      'Are any residual benefits still outstanding, and is someone actively tracking them?',
+      'Did any disbenefits materialise that were not anticipated during the project?',
+      'What does the final benefit realisation tell us about how we write future business cases?',
+    ],
+    checklist:[
+      'Business Case document created and approved by the Project Board',
+      'Expected benefits defined with measurable KPIs',
+      'Costs, timescales, and risks summarised',
+      'Investment appraisal completed (e.g. NPV, ROI, payback period)',
+      'Benefits Management Approach agreed and owner assigned',
+      'Business Case reviewed and updated at each stage end',
+      'Formal benefits review scheduled post-project',
+    ],
+    mistakes:[
+      {title:'Writing it once and filing it away',body:'The Business Case is a living document. Failing to update it at each stage boundary means the Project Board is making decisions based on stale assumptions about costs, benefits, and risks.'},
+      {title:'Confusing outputs with benefits',body:'Delivering a new system (output) is not the same as reducing processing time by 40% (benefit). Teams often declare success at delivery, but benefits are only realised long after the project closes.'},
+      {title:'Benefits that cannot be measured',body:'Vague benefits like "improved morale" with no baseline or measurement method make it impossible to evaluate whether the project was worthwhile.'},
+      {title:'The Executive is absent or passive',body:'The Executive must actively own the Business Case. When this role is delegated to the PM or left to a committee, accountability diffuses and hard decisions get avoided.'},
+      {title:'Ignoring the "do nothing" option',body:'PRINCE2 requires evaluating at least three options including doing nothing. Skipping this means the selected approach was never properly challenged against alternatives.'},
+      {title:'No post-project benefits review',body:'Most projects never conduct a formal benefits review. Without it, the organisation cannot learn whether the investment paid off or calibrate future business cases.'},
+    ],
+    hasOwners: false,
+  },
+  organisation: {
+    label:'Organisation', color:'#818cf8',
+    question:'Who is responsible for what?',
+    desc:'Defines the structure of accountability and responsibility across the project management team. PRINCE2 uses four management levels: Corporate/Programme, Project Board, Project Manager, and Team Manager. Every decision, role and communication channel must be clearly assigned.',
+    subtopics:['Project Board','Project Manager','Team Manager','Change Authority','Project Assurance'],
+    doc:'Role Descriptions + Communication Management Approach',
+    initQuestions:[
+      'Who is the Executive — the single point of accountability for the project?',
+      'Who represents the Senior Users and Senior Suppliers on the Project Board?',
+      'Has a Project Manager been formally appointed with a clear mandate?',
+      'Are all team roles, responsibilities, and decision rights documented?',
+      'Who provides independent Project Assurance to the Project Board?',
+      'How will communication flow between management levels and to stakeholders?',
+    ],
+    doingQuestions:[
+      'Are all Project Board members engaged and making timely decisions?',
+      'Do Team Managers have sufficient authority and resource to deliver their Work Packages?',
+      'Is Project Assurance operating independently from the Project Manager?',
+      'Are stakeholders being engaged at the right level and frequency?',
+      'Has a Change Authority been assigned for handling minor change requests?',
+      'Are escalation paths clear and are they being used appropriately?',
+    ],
+    postQuestions:[
+      'Have all project management team roles been formally stood down and resources released?',
+      'Has the project management team structure been documented in the End Project Report for future reference?',
+      'Have lessons about what worked and what failed in the team structure been captured in the Lessons Report?',
+      'Has the benefits ownership responsibility been formally transferred to the Senior User or corporate management?',
+      'Are there any outstanding stakeholder commitments that must be handed over to operational teams?',
+      'Has the corporate or programme layer accepted the updated Benefits Management Approach and follow-on actions?',
+    ],
+    checklist:[
+      'Executive formally appointed and accountable for the Business Case',
+      'Senior User and Senior Supplier roles filled on the Project Board',
+      'Project Manager appointed with a clear Terms of Reference',
+      'Team Manager roles assigned per Work Package',
+      'Change Authority defined with agreed financial and scope tolerances',
+      'Communication Management Approach written and distributed',
+      'Organisation chart created and visible to all team members',
+      'Project Assurance role assigned (independent from PM)',
+    ],
+    mistakes:[
+      {title:'Combining the Executive and Project Manager roles',body:'This destroys the management-by-exception model. The Executive must be able to hold the PM accountable — combining roles removes that governance check entirely.'},
+      {title:'Project Board members who never show up',body:'Board members who miss reviews, delay decisions, or rubber-stamp reports undermine the entire governance structure. Their active engagement is non-negotiable.'},
+      {title:'Project Assurance done by the Project Manager',body:'PRINCE2 requires assurance to be independent of the PM. When the PM assures their own project it is self-certification — a fundamental governance failure.'},
+      {title:'No formal stakeholder communication plan',body:'Without a Communication Management Approach, stakeholders receive inconsistent information at the wrong frequency, creating rumour, resistance, and mistrust.'},
+      {title:'Roles shared without clear boundaries',body:'Sharing roles is allowed, but only when there is no conflict of interest. When boundaries blur, decisions stall and nobody takes clear ownership of outcomes.'},
+      {title:'Forgetting the supplier perspective on the Board',body:'Omitting a Senior Supplier means technical and procurement risks are not represented at the decision-making level, leading to unrealistic plans and missed dependencies.'},
+    ],
+    hasOwners: true,
+    owners:[
+      {
+        name:'The Executive (Project Owner)',
+        badge:'Single point of accountability',
+        badgeColor:'#818cf8',
+        desc:'The Executive is the most important role in PRINCE2. Appointed by corporate or programme management, they are the sole individual accountable for the success of the project. This accountability cannot be delegated. In non-PRINCE2 organisations this role is often called the Project Sponsor.',
+        bullets:[
+          'Owns the Business Case throughout the project lifecycle and post-closure',
+          'Secures and maintains project funding from the business',
+          'Designs and appoints the project management team (including the PM)',
+          'Chairs the Project Board and is the final decision-maker on all Board matters',
+          'Balances the needs of the business, users, and suppliers when making decisions',
+          'Ensures the project aligns with organisational strategy and delivers return on investment',
+          'Approves all Stage Plans, Exception Plans, and major Change Requests',
+          'Authorises project closure and accepts the End Project Report',
+          'Remains accountable for benefits realisation even after the project closes',
+        ],
+        note:'The Executive role cannot be combined with the Project Manager, Team Manager, or Project Support roles. There can only ever be one Executive per project.',
+      },
+      {
+        name:'Senior User',
+        badge:'User & benefits advocate',
+        badgeColor:'#6ee7b7',
+        desc:'Represents the interests of everyone who will use the project\'s products, receive the benefits, or be affected by the outcomes. Usually drawn from the business operations side. Accountable for ensuring the project delivers what users actually need.',
+        bullets:[
+          'Specifies user requirements and defines acceptance criteria',
+          'Ensures that the project\'s products will actually deliver the stated benefits',
+          'Provides and commits user resources to quality reviews and testing',
+          'Monitors that solutions will work in practice, not just on paper',
+          'Signs off products on behalf of the user community',
+          'Accountable for benefits realisation after the project closes',
+          'Can be multiple people representing different user groups',
+        ],
+        note:'Post-project, the Senior User takes over from the Executive as the primary benefits accountable owner and must provide evidence that benefits have been gained.',
+      },
+      {
+        name:'Senior Supplier',
+        badge:'Technical authority',
+        badgeColor:'#fb923c',
+        desc:'Represents the interests of those designing, building, and delivering the project\'s products — whether internal teams or external contractors. Accountable for the technical integrity of the solution and the availability of supplier resources.',
+        bullets:[
+          'Confirms technical feasibility of requirements and plans',
+          'Commits supplier resources to the project at the right time',
+          'Ensures the delivered products meet technical quality standards',
+          'Manages supplier-side risks and issues at Board level',
+          'Provides technical advice to the Executive when making decisions',
+          'Can be multiple people if there are multiple supplier organisations',
+        ],
+        note:'The Senior Supplier and Senior User roles must not be combined — their interests can conflict. The Executive + Senior User combination is acceptable if no conflict of interest exists.',
+      },
+      {
+        name:'Project Manager',
+        badge:'Day-to-day delivery',
+        badgeColor:'#f472b6',
+        desc:'Delegated authority by the Project Board to run the project on a day-to-day basis within agreed tolerances. Responsible for all planning, monitoring, and reporting. The single point of contact between the Board and the delivery teams.',
+        bullets:[
+          'Plans and maintains the Stage Plan, updating it to reflect actual progress',
+          'Authorises and manages Work Packages issued to Team Managers',
+          'Monitors risks, issues, quality, and progress against all six tolerances',
+          'Produces Checkpoint summaries, Highlight Reports, and End Stage Reports',
+          'Raises Exception Reports to the Board when tolerances are forecast to be breached',
+          'Manages the Issue Register, Risk Register, Quality Register, and Lessons Log',
+          'Prepares End Stage and End Project documentation for Board review',
+          'Is accountable for outputs — not for benefits (that is the Senior User\'s responsibility)',
+        ],
+        note:'The PM cannot also be the Executive or perform Project Assurance. If there are no Team Managers, the PM takes on those responsibilities directly.',
+      },
+    ],
+  },
+  quality: {
+    label:'Quality', color:'#34d399',
+    question:'What must the project deliver, and how will we know it is right?',
+    desc:'Defines and controls the quality of all project products. PRINCE2 distinguishes between Quality Planning (what is required) and Quality Control (checking products meet requirements). Quality must be built in from the start, not inspected in at the end.',
+    subtopics:['Quality Register','Product Descriptions','Acceptance Criteria','Quality Reviews','Quality Assurance'],
+    doc:'Quality Management Approach + Quality Register',
+    initQuestions:[
+      'What are the customer\'s quality expectations for the final product?',
+      'What acceptance criteria must all major deliverables meet?',
+      'Who is responsible for approving that products meet quality standards?',
+      'What quality methods (reviews, testing, audits) will be used and when?',
+      'Has a Quality Register been set up to log all planned quality activities?',
+      'Are Product Descriptions written for every major deliverable?',
+    ],
+    doingQuestions:[
+      'Are quality reviews and tests being completed as planned?',
+      'Is the Quality Register being updated after each quality event?',
+      'Are product defects being resolved before products are signed off?',
+      'Are acceptance criteria being interpreted consistently by users and suppliers?',
+      'Is quality assurance (independent review) taking place at key stages?',
+      'Are lessons about quality being captured and fed back into the plan?',
+    ],
+    postQuestions:[
+      'Were all products formally signed off and accepted before the project closed?',
+      'Have any quality defects been logged as follow-on action recommendations for operational teams?',
+      'Did the quality standards set at initiation prove realistic, or did they need constant adjustment?',
+      'Were the quality review methods (testing, inspection, formal review) effective and proportionate?',
+      'Has the Quality Register been archived and made available for future project reference?',
+      'What lessons about quality planning should be fed into the organisation\'s project standards?',
+    ],
+    checklist:[
+      'Customer quality expectations captured in writing',
+      'Acceptance criteria agreed with Senior User',
+      'Product Descriptions written for all major deliverables',
+      'Quality Management Approach documented and approved',
+      'Quality Register created and maintained throughout the project',
+      'Quality review method agreed (formal review, testing, inspection)',
+      'Quality Assurance activities scheduled and resourced',
+      'Products formally signed off before closure',
+    ],
+    mistakes:[
+      {title:'No Product Descriptions until it is too late',body:'Writing Product Descriptions after work has started means the team builds to their own interpretation. Disputes at sign-off are almost always rooted in acceptance criteria that were never agreed upfront.'},
+      {title:'Confusing Quality Assurance with Quality Control',body:'QC checks individual products; QA audits whether quality processes themselves are working. Projects that only do QC have no independent oversight of their own quality system.'},
+      {title:'Customer quality expectations left vague',body:'"High quality" means different things to different people. Without specific, measurable criteria, sign-off becomes a negotiation rather than a verification.'},
+      {title:'The Quality Register is never updated',body:'Logging planned activities and never recording what happened or was found makes the register useless for progress reporting and lessons learned.'},
+      {title:'Skipping quality review to save time',body:'Cutting reviews under schedule pressure is the fastest way to deliver a product that fails acceptance. Rework almost always costs more than the review would have taken.'},
+      {title:'Sign-off given without formal review',body:'Informal verbal approval is not the same as formal sign-off. Products that are not formally accepted remain open to later rejection, creating scope and cost disputes.'},
+    ],
+    hasOwners: false,
+  },
+  plans: {
+    label:'Plans', color:'#38bdf8',
+    question:'How, when and for how much?',
+    desc:'Provides the backbone for communication and control. PRINCE2 uses a hierarchy of plans: Project Plan, Stage Plans, Team Plans, and Exception Plans. All plans are product-based — you start by defining what needs to be created, then work backwards to activities, resources, and timelines.',
+    subtopics:['Project Plan','Stage Plan','Team Plan','Exception Plan','Work Packages'],
+    doc:'Project Plan + Stage Plans + Work Package definitions',
+    initQuestions:[
+      'Have all products (deliverables) been identified using a Product Breakdown Structure?',
+      'Is the Project Plan baselined with agreed scope, schedule, cost, and quality targets?',
+      'Has the first Stage Plan been created in sufficient detail to be actionable?',
+      'Are dependencies between products and activities mapped?',
+      'Are resource requirements and availability confirmed for the first stage?',
+      'Have planning assumptions been documented and validated?',
+    ],
+    doingQuestions:[
+      'Is the Stage Plan being updated to reflect actual progress?',
+      'Are Work Packages being authorised before teams begin work?',
+      'Are tolerances being monitored and exceptions raised before they are breached?',
+      'Has an Exception Plan been created if a stage tolerance is forecast to be exceeded?',
+      'Are Team Plans aligned with the current Stage Plan?',
+      'Is the next Stage Plan being prepared in time for the stage boundary review?',
+    ],
+    postQuestions:[
+      'How accurately did the Project Plan predict actual cost, time, and scope at completion?',
+      'Were stage boundaries set at useful decision points, or were they arbitrary?',
+      'Did the product-based planning approach cover all deliverables, or were products missed?',
+      'Were planning assumptions documented, and which ones proved to be wrong?',
+      'Were Exception Plans raised at the right times, or were tolerances breached without escalation?',
+      'What planning lessons should inform how we structure stage boundaries on future projects?',
+    ],
+    checklist:[
+      'Product Breakdown Structure (PBS) completed for full project scope',
+      'Product Flow Diagram created to show delivery sequence',
+      'Project Plan approved by the Project Board at Initiation',
+      'First Stage Plan approved before Stage 1 begins',
+      'Tolerances defined for each plan (time, cost, scope, quality, risk, benefit)',
+      'Work Packages authorised in writing before team work starts',
+      'Team Plans prepared by Team Managers for complex Work Packages',
+      'Exception Plan produced whenever a stage tolerance is forecast to be exceeded',
+    ],
+    mistakes:[
+      {title:'Planning activities before defining products',body:'Starting with a task list rather than a Product Breakdown Structure is the most common planning failure. You cannot reliably estimate effort or sequence until you know what you are building.'},
+      {title:'A single monolithic plan with no stages',body:'One long plan with no stage boundaries removes the Project Board\'s ability to review and re-authorise. Governing by stage is fundamental to PRINCE2 — skipping it breaks the model.'},
+      {title:'Tolerances set at zero',body:'Zero tolerance for any variance means every minor deviation becomes an exception. Tolerances should reflect realistic uncertainty at each plan level — too tight and governance becomes noise.'},
+      {title:'Work Packages agreed verbally, not in writing',body:'Without a written Work Package, there is no baseline for the team to be managed against. Scope, quality criteria, reporting requirements and constraints must all be formally agreed.'},
+      {title:'The next Stage Plan is not ready at stage end',body:'Arriving at a stage boundary without an approved Stage Plan forces either a rushed review or a delay. Plans should be drafted well before the boundary meeting.'},
+      {title:'Planning assumptions are never documented',body:'Every plan rests on assumptions. When they are not recorded they cannot be challenged, tracked, or updated — and when they prove wrong, the plan appears to fail without explanation.'},
+    ],
+    hasOwners: false,
+  },
+  risk: {
+    label:'Risk', color:'#fb923c',
+    question:'What if something goes wrong — or right?',
+    desc:'Manages uncertainty across the project — both threats (negative risks) and opportunities (positive risks). PRINCE2 uses a continuous cycle: Identify → Assess → Plan → Implement → Communicate. Every risk has an owner accountable for its management and an actionee responsible for the response.',
+    subtopics:['Risk Register','Probability/Impact','Risk Responses','Risk Owner','Risk Budget'],
+    doc:'Risk Management Approach + Risk Register',
+    initQuestions:[
+      'What are the top risks that could prevent the project delivering its Business Case?',
+      'Has a Risk Management Approach been agreed (appetite, tolerance, response types)?',
+      'Is a Risk Register in place with a risk owner and actionee for every entry?',
+      'Has a risk budget been allocated within the overall project cost plan?',
+      'What early warning indicators will signal that risks are materialising?',
+      'Have both threats AND opportunities been assessed?',
+    ],
+    doingQuestions:[
+      'Are risks being reviewed at each Checkpoint and Highlight Report?',
+      'Have any new risks emerged that need to be logged and assessed?',
+      'Are risk owners actively managing their assigned risks?',
+      'Has the overall risk profile changed enough to impact the Business Case?',
+      'Are risk responses appropriate, affordable, and actually being implemented?',
+      'Is the risk budget being consumed at a sustainable rate?',
+    ],
+    postQuestions:[
+      'Which risks materialised, and were the planned responses effective when they did?',
+      'Were any major risks missed entirely at the outset that only emerged during delivery?',
+      'Were there opportunities that were identified but not exploited — and why?',
+      'Were risk budgets consumed proportionately, or were they exhausted early or barely used?',
+      'Have any residual risks been formally handed over to operational teams as follow-on actions?',
+      'What does the final Risk Register tell us about how well we assessed probability and impact?',
+    ],
+    checklist:[
+      'Risk Management Approach documented and approved',
+      'Risk Register created with probability, impact, and proximity assessed',
+      'Risk owner and actionee assigned for every risk',
+      'Risk responses defined (avoid, reduce, transfer, accept, exploit, share)',
+      'Risk budget identified within the project cost plan',
+      'Risks reviewed at every Checkpoint, Highlight Report, and stage end',
+      'Residual and secondary risks evaluated after responses are planned',
+      'Risk summary included in End Stage and End Project Reports',
+    ],
+    mistakes:[
+      {title:'Treating the Risk Register as a one-time exercise',body:'Identifying risks at the start and never reviewing them is one of the most dangerous habits in project management. New risks emerge constantly and existing ones change in likelihood and impact.'},
+      {title:'Logging risks with no owner or actionee',body:'A risk with no owner is a risk nobody manages. Both an owner (accountable) and an actionee (doing the response) must be named — they can be different people.'},
+      {title:'Only logging threats, never opportunities',body:'PRINCE2 explicitly includes opportunities as risks. Teams that only think negatively miss chances to exploit favourable conditions that could accelerate delivery or reduce cost.'},
+      {title:'Accepting all risks without a response plan',body:'"Accept" is a valid response — but it should be a conscious decision, not the default because nobody has time to think. Accepted risks still need monitoring and a fallback plan.'},
+      {title:'No risk budget in the plan',body:'Risk responses cost money and time. Without a ring-fenced risk budget, every materialised risk becomes an unplanned cost that threatens the Business Case.'},
+      {title:'Confusing risks with issues',body:'A risk is something that might happen; an issue has already happened. Treating materialised risks as still-theoretical means they never get escalated or resolved urgently.'},
+    ],
+    hasOwners: false,
+  },
+  change: {
+    label:'Change', color:'#f472b6',
+    question:'What is the impact of this change on the agreed baseline?',
+    desc:'Controls how issues, requests for change, and off-specifications are raised, assessed, and decided upon. PRINCE2 distinguishes three issue types: Request for Change, Off-Specification, and Problem/Concern. Configuration Management ensures all product versions are tracked and protected.',
+    subtopics:['Issue Register','Change Requests','Off-Specifications','Change Authority','Configuration Mgmt'],
+    doc:'Change Control Approach + Issue Register + Configuration Item Records',
+    initQuestions:[
+      'What is the Change Control Approach — who can approve changes at each level?',
+      'Has a Change Authority been appointed with a defined change budget?',
+      'Is an Issue Register set up to capture all issues, RFCs, and off-specs?',
+      'How will configuration items (products) be identified, versioned, and protected?',
+      'What is the baseline against which changes will be assessed?',
+      'How will approved changes be reflected in updated plans and Product Descriptions?',
+    ],
+    doingQuestions:[
+      'Are all change requests being logged in the Issue Register before assessment?',
+      'Is every RFC being assessed for impact on scope, cost, time, quality, risk, and benefits?',
+      'Are changes within the Change Authority\'s tolerance being decided promptly?',
+      'Are out-of-tolerance changes being escalated to the Project Board?',
+      'Are off-specifications being formally tracked and resolved?',
+      'Is the configuration management system keeping product versions under control?',
+    ],
+    postQuestions:[
+      'Were all open issues and RFCs formally resolved or handed over before closure?',
+      'Did the volume of change requests indicate that initial scope definition was poor?',
+      'Was the change budget sufficient, or did it run out and cause governance problems?',
+      'Have any accepted off-specifications been formally recorded as follow-on action recommendations?',
+      'Were configuration records for all delivered products handed over to the operational team?',
+      'What does the Issue Register reveal about the root causes of change on this project?',
+    ],
+    checklist:[
+      'Change Control Approach agreed and approved at Initiation',
+      'Change Authority appointed with defined financial and scope tolerances',
+      'Issue Register created and actively maintained',
+      'Configuration Management Strategy in place for all major products',
+      'Baseline set for all approved plans (scope, schedule, cost)',
+      'All RFCs impact-assessed before any decision is made',
+      'Change budget tracked separately from the project budget',
+      'Approved changes reflected in updated Product Descriptions and Plans',
+    ],
+    mistakes:[
+      {title:'Implementing changes before they are approved',body:'Acting on a verbal agreement before a change is formally assessed destroys the baseline. Every change — however small — must go through the Issue Register and be approved before work starts.'},
+      {title:'No baseline means no change control',body:'You cannot control changes to something that was never baselined. Without approved, signed-off plans and Product Descriptions as a reference, every deviation is invisible.'},
+      {title:'The Issue Register is not maintained',body:'When issues are managed informally in emails or in people\'s heads, they fall through the cracks. The Issue Register is the single source of truth for all unplanned events.'},
+      {title:'Off-specifications treated as acceptable workarounds',body:'An off-specification is a product that does not meet its Product Description. Accepting these informally rather than logging and resolving them erodes quality expectations over time.'},
+      {title:'Scope creep through unchallenged "small" changes',body:'Individual changes that seem minor each accumulate into significant scope drift. Every RFC must be assessed for its total impact, including the precedent it sets for future requests.'},
+      {title:'Change budget exhausted early with no escalation',body:'When the change budget runs out, teams often absorb costs illegitimately. Depletion of the change budget should trigger an escalation to the Project Board.'},
+    ],
+    hasOwners: false,
+  },
+  progress: {
+    label:'Progress', color:'#a3e635',
+    question:'Where are we now, and where are we heading?',
+    desc:'Monitors actual performance against the plan and provides a control mechanism for the Project Board and Project Manager. Tolerances define acceptable variances — when these are forecast to be exceeded, an Exception Report triggers a decision. Reporting cadence is agreed in advance.',
+    subtopics:['Checkpoint Reports','Highlight Reports','End Stage Reports','Tolerances','Exception Reports'],
+    doc:'Progress Reports (Checkpoint, Highlight, End Stage, End Project)',
+    initQuestions:[
+      'What tolerances have been set for time, cost, scope, quality, risk, and benefits?',
+      'What is the reporting cadence — how often will Checkpoint and Highlight Reports be produced?',
+      'What performance baselines will actual progress be measured against?',
+      'Who receives which reports, and in what format?',
+      'At what point must the Project Manager escalate to the Project Board?',
+      'How will lessons be captured and documented throughout the project?',
+    ],
+    doingQuestions:[
+      'Are Checkpoint Reports being submitted by Team Managers on schedule?',
+      'Are Highlight Reports providing the Project Board with accurate status?',
+      'Is actual performance being tracked against the Stage Plan baseline?',
+      'Are any tolerances forecast to be exceeded — and have Exception Reports been raised?',
+      'Is the Lessons Log being updated with new learnings?',
+      'Is the End Stage Report complete and ready for the stage boundary review?',
+    ],
+    postQuestions:[
+      'How accurately did the project track against the original baseline over its whole life?',
+      'Were the tolerances set at the right level — too tight, too loose, or about right?',
+      'Was the reporting cadence appropriate, or did it create too much or too little overhead?',
+      'Was the End Project Report completed and formally accepted by the Project Board?',
+      'Have all Lessons been compiled into a Lessons Report and distributed to the wider organisation?',
+      'Have follow-on action recommendations been formally handed to the appropriate operational owners?',
+    ],
+    checklist:[
+      'Tolerances (time, cost, scope, quality, risk, benefit) set at project and stage level',
+      'Reporting schedule agreed: Checkpoint, Highlight, End Stage, End Project',
+      'Performance baselines locked at start of each stage',
+      'Lessons Log created and updated continuously',
+      'Checkpoint Reports submitted by Team Managers at agreed frequency',
+      'Highlight Reports sent to Project Board at agreed frequency',
+      'Exception Report raised whenever a tolerance is forecast to be exceeded',
+      'End Stage Report prepared and presented at every stage boundary',
+      'End Project Report and Lessons Report produced at project closure',
+    ],
+    mistakes:[
+      {title:'Reporting status instead of forecast',body:'Telling the Board "we are two weeks behind" is less useful than "we forecast the stage will complete three weeks late." Progress reporting must look forward, not just backward.'},
+      {title:'Green status on reports until it is too late',body:'Teams often protect their status by reporting green long after tolerances are clearly threatened. The manage-by-exception model only works if PMs raise exceptions early and honestly.'},
+      {title:'Not raising an Exception Report when tolerances are breached',body:'Quietly absorbing overruns without escalating is a governance failure. The Project Board has the authority to make decisions when tolerances are exceeded — but only if they are told.'},
+      {title:'Lessons logged only at project end',body:'Waiting until the End Project Report to capture lessons means the project itself cannot benefit from them. The Lessons Log must be updated continuously so each stage learns from the last.'},
+      {title:'Highlight Reports that nobody reads',body:'If reports are too long or formatted for the wrong audience, they stop being read. Board members need exceptions and decisions, not operational detail.'},
+      {title:'Closing the project without a formal End Project Report',body:'Informal closures leave benefits untracked, lessons unrecorded, and resources unconfirmed as released. A formal End Project Report and handover are required regardless of project size.'},
+    ],
+    hasOwners: false,
+  },
+  people: {
+    label:'People', color:'#e879f9',
+    question:'How do we lead, engage and inspire?',
+    desc:'Introduced as a standalone element in PRINCE2 7th edition, People recognises that projects are delivered by humans — and that leadership, communication, collaboration, and change management are as critical as any process. A technically perfect plan fails without engaged people behind it.',
+    subtopics:['Leadership','Stakeholder Engagement','Team Dynamics','Change Management','Emotional Intelligence'],
+    doc:'People Management Approach + Stakeholder Engagement Approach',
+    initQuestions:[
+      'Who are the key stakeholders and what are their interests, influence, and attitudes?',
+      'What leadership style is appropriate for this project\'s team and context?',
+      'How will the team be formed, developed, and kept motivated across stages?',
+      'What change management approach will support people affected by the project\'s outputs?',
+      'Are there cultural or organisational dynamics that could affect team collaboration?',
+      'How will communication be tailored to the needs of different people and groups?',
+    ],
+    doingQuestions:[
+      'Are team members engaged, motivated, and clear on their purpose?',
+      'Are stakeholders being actively managed — not just informed?',
+      'Is the PM adapting their leadership style as the project and team evolve?',
+      'Are conflicts being surfaced and resolved constructively, not avoided?',
+      'Is the change management approach keeping pace with resistance or disengagement?',
+      'Are psychological safety and trust present in the team environment?',
+    ],
+    postQuestions:[
+      'Did the team feel empowered and respected throughout the project?',
+      'Were stakeholder concerns heard early enough to prevent issues?',
+      'How effectively was organisational change managed for those impacted by the outputs?',
+      'Were there moments where a different leadership approach would have improved outcomes?',
+      'Did team dynamics help or hinder delivery — and what would you do differently?',
+      'Have people-related lessons been captured for future projects?',
+    ],
+    checklist:[
+      'Stakeholder register created with influence, interest, and attitude mapped',
+      'People Management Approach documented and agreed',
+      'Leadership style assessed and adapted to team and project context',
+      'Team charter or working agreement established',
+      'Change management approach defined for those impacted by project outputs',
+      'Communication plan tailored to individual stakeholder needs',
+      'Conflict resolution approach agreed within the team',
+      'Regular team health checks or retrospectives scheduled',
+      'Emotional intelligence considered in PM and team leader appointments',
+    ],
+    mistakes:[
+      {title:'Treating stakeholder engagement as a one-off activity',body:'Stakeholders\' attitudes and influence shift throughout the project. A stakeholder map created at initiation and never reviewed will miss the people who become critical opponents — or champions — mid-project.'},
+      {title:'One leadership style for all situations',body:'No single leadership style fits every stage of a project or every team. PRINCE2 7 explicitly recognises adaptive leadership — the best PMs flex between directive, coaching, collaborative, and delegating styles as needed.'},
+      {title:'Confusing communication with information',body:'Sending a report is not the same as communicating. Real communication is two-way — it involves listening, checking understanding, and adjusting based on what comes back. Information sent but not received is just noise.'},
+      {title:'Ignoring the human side of change',body:'A project that delivers a perfect technical solution into an organisation that was never prepared for it will fail in practice. Change management — readiness, adoption, and resistance — must be planned from day one, not bolted on at go-live.'},
+      {title:'Emotional intelligence dismissed as "soft skills"',body:'Research consistently shows that emotional intelligence — self-awareness, empathy, social skill — predicts project success more reliably than technical expertise. Dismissing it means ignoring one of the strongest performance levers available.'},
+      {title:'Team building treated as a luxury',body:'Skipping team-building activities under schedule pressure is a false economy. Teams that lack trust communicate less honestly, escalate less early, and recover more slowly from setbacks — exactly when you need them most.'},
+    ],
+    hasOwners: false,
+  },
+};
+
+const CONNECTIONS=[
+  ['businessCase','organisation'],['businessCase','risk'],['businessCase','progress'],
+  ['organisation','plans'],['organisation','progress'],
+  ['plans','quality'],['plans','risk'],['plans','progress'],
+  ['risk','change'],['quality','change'],
+  ['change','progress'],['quality','progress'],
+  ['people','organisation'],['people','change'],['people','progress'],['people','risk'],
+];
+
+// Legend
+const legendEl=document.getElementById('legend');
+Object.values(THEMES).forEach(th=>{
+  const el=document.createElement('div');el.className='legend-item';
+  el.innerHTML=`<div class="legend-dot" style="background:${th.color}"></div>${th.label}`;
+  legendEl.appendChild(el);
+});
+
+// Canvas
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+let W,H,nodes,dots,activeNode=null,t=0;
+
+// Panel offset animation
+const PANEL_W = 460;   // sidebar width in CSS px
+let canvasOffset = 0;  // current animated offset (px)
+let offsetTarget  = 0; // target offset
+
+function animateOffset(){
+  const diff = offsetTarget - canvasOffset;
+  if(Math.abs(diff) > 0.5){
+    canvasOffset += diff * 0.12;  // smooth lerp
+    repositionNodes();
+  } else {
+    canvasOffset = offsetTarget;
+  }
+}
+
+function resizeCanvas(){
+  const wrap = canvas.parentElement;
+  W = wrap.offsetWidth;
+  H = wrap.offsetHeight;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.resetTransform();
+  ctx.scale(dpr, dpr);
+}
+
+function repositionNodes(){
+  if(!nodes) return;
+  // Logical drawing area is shifted right by canvasOffset and narrowed
+  const drawW = W - canvasOffset;
+  const cx = canvasOffset + drawW/2;
+  const cy = H/2;
+  const r  = Math.min(drawW, H) * 0.30;
+  const nr = Math.min(drawW, H) * 0.044;
+  const ob = Math.min(drawW, H) * 0.083;
+  const keys = Object.keys(THEMES);
+  keys.forEach((k,i) => {
+    const a = (i/keys.length)*Math.PI*2 - Math.PI/2;
+    nodes[k].x      = cx + Math.cos(a)*r;
+    nodes[k].y      = cy + Math.sin(a)*r;
+    nodes[k].radius = nr;
+  });
+  dots.forEach(d => {
+    d.dist = ob + (d.dist % (ob*0.5));
+    d.r    = Math.max(2, nr*0.14) + (d.r % 1.5);
+  });
+}
+
+function setup(){
+  resizeCanvas();
+  const drawW = W - canvasOffset;
+  const cx = canvasOffset + drawW/2;
+  const cy = H/2;
+  const r  = Math.min(drawW, H) * 0.30;
+  const nr = Math.min(drawW, H) * 0.044;
+  const ob = Math.min(drawW, H) * 0.083;
+  const keys = Object.keys(THEMES);
+  nodes = {};
+  keys.forEach((k,i) => {
+    const a = (i/keys.length)*Math.PI*2 - Math.PI/2;
+    nodes[k] = {x:cx+Math.cos(a)*r, y:cy+Math.sin(a)*r, key:k, ...THEMES[k], radius:nr, pulseT:Math.random()*Math.PI*2};
+  });
+  dots = [];
+  keys.forEach(k => {
+    nodes[k].subtopics.forEach((label,i) => {
+      const a = (i/nodes[k].subtopics.length)*Math.PI*2 + Math.random()*0.5;
+      const dist = ob + Math.random()*ob*0.5;
+      dots.push({x:0,y:0,r:Math.max(2,nr*0.14)+Math.random()*1.5,color:nodes[k].color,alpha:0.28+Math.random()*0.35,label,parentKey:k,dist,orbitSpeed:(Math.random()-0.5)*0.0022,orbitAngle:a});
+    });
+  });
+}
+
+function drawConnections(){
+  CONNECTIONS.forEach(([a,b])=>{
+    const na=nodes[a],nb=nodes[b],hi=activeNode&&(activeNode===a||activeNode===b);
+    ctx.save();ctx.strokeStyle=hi?'rgba(140,170,240,0.5)':'rgba(60,80,140,0.09)';ctx.lineWidth=hi?1.3:0.55;
+    ctx.setLineDash([3,7]);ctx.lineDashOffset=-t*0.018;
+    ctx.beginPath();ctx.moveTo(na.x,na.y);ctx.lineTo(nb.x,nb.y);ctx.stroke();
+    ctx.setLineDash([]);ctx.restore();
+  });
+}
+function drawDots(){
+  const lsz=Math.max(6,Math.min(W,H)*0.017);
+  dots.forEach(d=>{
+    const node=nodes[d.parentKey];d.orbitAngle+=d.orbitSpeed;
+    d.x=node.x+Math.cos(d.orbitAngle)*d.dist;d.y=node.y+Math.sin(d.orbitAngle)*d.dist;
+    const on=activeNode===d.parentKey||activeNode===null;
+    ctx.save();ctx.globalAlpha=on?d.alpha:d.alpha*0.08;ctx.fillStyle=d.color;
+    ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fill();ctx.restore();
+    if(activeNode===d.parentKey){
+      ctx.save();ctx.globalAlpha=0.78;ctx.font=`${lsz}px DM Mono,monospace`;
+      ctx.fillStyle=d.color;ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(d.label,d.x,d.y-d.r-lsz*0.85);ctx.restore();
+    }
+  });
+}
+function drawNodes(){
+  const lsz=Math.max(6.5,Math.min(W,H)*0.020);
+  Object.values(nodes).forEach(n=>{
+    n.pulseT+=0.019;const pulse=Math.sin(n.pulseT)*2.5,hi=activeNode===n.key,rad=hi?n.radius*1.15:n.radius;
+    const grd=ctx.createRadialGradient(n.x,n.y,rad*0.3,n.x,n.y,rad+pulse+14);
+    grd.addColorStop(0,n.color+'3a');grd.addColorStop(1,n.color+'00');
+    ctx.beginPath();ctx.arc(n.x,n.y,rad+pulse+14,0,Math.PI*2);ctx.fillStyle=grd;ctx.fill();
+    ctx.beginPath();ctx.arc(n.x,n.y,rad,0,Math.PI*2);ctx.fillStyle=hi?n.color:n.color+'aa';ctx.fill();
+    ctx.beginPath();ctx.arc(n.x-rad*0.22,n.y-rad*0.22,rad*0.24,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.16)';ctx.fill();
+    ctx.save();
+    ctx.font=`${hi?'500':'400'} ${lsz}px DM Mono,monospace`;
+    ctx.textAlign='center';ctx.textBaseline='top';
+    let lbl=n.label.toUpperCase();
+    if(W<370){const ab={'BUSINESS CASE':'BIZ CASE','ORGANISATION':'ORG'};lbl=ab[lbl]||lbl;}
+    const lblY=n.y+rad+5;
+    const lblW=ctx.measureText(lbl).width;
+    const padX=6,padY=3,rnd=3;
+    // Background pill
+    ctx.globalAlpha=hi?0.72:0.48;
+    ctx.fillStyle='#090c12';
+    ctx.beginPath();
+    ctx.roundRect(n.x-lblW/2-padX, lblY-padY, lblW+padX*2, lsz+padY*2, rnd);
+    ctx.fill();
+    // Text
+    ctx.globalAlpha=1;
+    ctx.fillStyle=hi?n.color:'rgba(200,215,235,0.9)';
+    ctx.fillText(lbl,n.x,lblY);
+    ctx.restore();
+  });
+}
+function render(){animateOffset();ctx.clearRect(0,0,W,H);drawConnections();drawDots();drawNodes();t++;requestAnimationFrame(render);}
+
+function getXY(cx,cy){const r=canvas.getBoundingClientRect();return{x:(cx-r.left)*(W/r.width),y:(cy-r.top)*(H/r.height)};}
+function hitTest(x,y){return Object.values(nodes).find(n=>{const dx=x-n.x,dy=y-n.y;return Math.sqrt(dx*dx+dy*dy)<n.radius+18;})?.key??null;}
+
+const checkState={};
+
+
+const QUOTES = {
+  businessCase: [
+    {
+      text: "However beautiful the strategy, you should occasionally look at the results.",
+      author: "Winston Churchill", role: "British Prime Minister",
+    },
+    {
+      text: "A project without a business case is a solution looking for a problem.",
+      author: "Andy Murray", role: "Project Management Author",
+    },
+    {
+      text: "Price is what you pay. Value is what you get.",
+      author: "Warren Buffett", role: "Investor & Businessman",
+    },
+  ],
+  organisation: [
+    {
+      text: "Good management is the art of making problems so interesting and their solutions so constructive that everyone wants to get to work and deal with them.",
+      author: "Paul Hawken", role: "Entrepreneur & Author",
+    },
+    {
+      text: "Organisations are not structures — they are conversations.",
+      author: "Peter Drucker", role: "Management Consultant",
+    },
+    {
+      text: "Accountability is the glue that ties commitment to results.",
+      author: "Bob Proctor", role: "Author & Speaker",
+    },
+  ],
+  quality: [
+    {
+      text: "Quality is never an accident. It is always the result of intelligent effort.",
+      author: "John Ruskin", role: "Art Critic & Social Thinker",
+    },
+    {
+      text: "The bitterness of poor quality remains long after the sweetness of low price is forgotten.",
+      author: "Benjamin Franklin", role: "Founding Father & Inventor",
+    },
+    {
+      text: "If you think it's expensive to hire a professional, wait until you hire an amateur.",
+      author: "Red Adair", role: "Oil Well Firefighter",
+    },
+  ],
+  plans: [
+    {
+      text: "Give me six hours to chop down a tree and I will spend the first four sharpening the axe.",
+      author: "Abraham Lincoln", role: "16th US President",
+    },
+    {
+      text: "Plans are nothing; planning is everything.",
+      author: "Dwight D. Eisenhower", role: "34th US President & General",
+    },
+    {
+      text: "A goal without a plan is just a wish.",
+      author: "Antoine de Saint-Exupéry", role: "Author of The Little Prince",
+    },
+  ],
+  risk: [
+    {
+      text: "Take calculated risks. That is quite different from being rash.",
+      author: "George S. Patton", role: "US Army General",
+    },
+    {
+      text: "The biggest risk is not taking any risk. In a world that is changing quickly, the only strategy that is guaranteed to fail is not taking risks.",
+      author: "Mark Zuckerberg", role: "Co-founder of Meta",
+    },
+    {
+      text: "Risk comes from not knowing what you are doing.",
+      author: "Warren Buffett", role: "Investor & Businessman",
+    },
+  ],
+  change: [
+    {
+      text: "It is not the strongest of the species that survives, nor the most intelligent — it is the one most adaptable to change.",
+      author: "Charles Darwin", role: "Naturalist & Biologist",
+    },
+    {
+      text: "Everyone thinks of changing the world, but no one thinks of changing himself.",
+      author: "Leo Tolstoy", role: "Author & Philosopher",
+    },
+    {
+      text: "Change is hard at first, messy in the middle, and gorgeous at the end.",
+      author: "Robin Sharma", role: "Author & Leadership Expert",
+    },
+  ],
+  people: [
+    {
+      text: "The single biggest problem in communication is the illusion that it has taken place.",
+      author: "George Bernard Shaw", role: "Playwright & Nobel Laureate",
+    },
+    {
+      text: "Management is doing things right; leadership is doing the right things.",
+      author: "Peter Drucker", role: "Management Consultant",
+    },
+    {
+      text: "If everyone is moving forward together, then success takes care of itself.",
+      author: "Henry Ford", role: "Industrialist & Founder of Ford Motor Company",
+    },
+  ],
+  progress: [
+    {
+      text: "Without data you are just another person with an opinion.",
+      author: "W. Edwards Deming", role: "Engineer & Management Thinker",
+    },
+    {
+      text: "Measure what is measurable, and make measurable what is not so.",
+      author: "Galileo Galilei", role: "Astronomer & Physicist",
+    },
+    {
+      text: "What gets measured gets managed.",
+      author: "Peter Drucker", role: "Management Consultant",
+    },
+  ],
+  people: [
+    {
+      text: "The secret of getting things done is to act.",
+      author: "Dante Alighieri", role: "Poet & Philosopher",
+    },
+    {
+      text: "Leadership is not about being in charge. It is about taking care of those in your charge.",
+      author: "Simon Sinek", role: "Author & Leadership Expert",
+    },
+    {
+      text: "Alone we can do so little; together we can do so much.",
+      author: "Helen Keller", role: "Author & Activist",
+    },
+  ],
+};
+
+// Track which quote index to show per theme — cycles on each open
+const quoteIndex = {};
+
+function renderOverview(k){
+  const n=THEMES[k];
+  const timelineLink = k==='plans'
+    ? `<a class="ip-subpage-link" href="planning-timeline.html">View Planning Timeline →</a>`
+    : k==='organisation'
+    ? `<a class="ip-subpage-link" href="organisation-structure.html" style="border-color:rgba(129,140,248,0.35);color:#818cf8">View Organisation Structure →</a>`
+    : k==='businessCase'
+    ? `<a class="ip-subpage-link" href="businesscase.html" style="border-color:rgba(245,158,11,0.35);color:#f59e0b">View Business Case Example →</a>`
+    : k==='change'
+    ? `<a class="ip-subpage-link" href="change-control.html" style="border-color:rgba(244,114,182,0.35);color:#f472b6">View Change Control →</a>`
+    : k==='risk'
+    ? `<a class="ip-subpage-link" href="risk-management.html" style="border-color:rgba(251,146,60,0.35);color:#fb923c">View Risk Management →</a>`
+    : k==='people'
+    ? `<a class="ip-subpage-link" href="people.html" style="border-color:rgba(232,121,249,0.35);color:#e879f9">View People & Leadership →</a>`
+    : '';
+  if(quoteIndex[k] === undefined) quoteIndex[k] = 0;
+  else quoteIndex[k] = (quoteIndex[k] + 1) % QUOTES[k].length;
+  const q = QUOTES[k][quoteIndex[k]];
+  const quoteHtml = q ? `
+    <div class="ip-quote">
+      <div class="ip-quote-text">"${q.text}"</div>
+      <div class="ip-quote-author">— <span>${q.author}</span> · ${q.role}</div>
+    </div>` : '';
+  document.getElementById('pane-overview').innerHTML=
+    `<p class="ip-desc">${n.desc}</p>`+
+    `<div class="ip-tags">${n.subtopics.map(s=>`<span class="ip-tag">${s}</span>`).join('')}</div>`+
+    `<p class="ip-doc"><strong>Key document${n.doc.includes('+')?'s':''}: </strong>${n.doc}</p>`+
+    timelineLink +
+    quoteHtml;
+}
+
+function renderQuestions(k){
+  const n=THEMES[k];
+  document.getElementById('pane-questions').innerHTML=
+    `<p class="q-section">When starting the project</p>`+
+    `<ul class="q-list">${n.initQuestions.map(q=>`<li>${q}</li>`).join('')}</ul>`+
+    `<p class="q-section">During delivery</p>`+
+    `<ul class="q-list">${n.doingQuestions.map(q=>`<li>${q}</li>`).join('')}</ul>`+
+    `<p class="q-section post">After the project closes</p>`+
+    `<ul class="q-list post">${n.postQuestions.map(q=>`<li>${q}</li>`).join('')}</ul>`;
+}
+
+function renderChecklist(k){
+  if(!checkState[k])checkState[k]={};
+  const n=THEMES[k],el=document.getElementById('pane-checklist');
+  el.innerHTML=`<ul class="check-list">${n.checklist.map((item,i)=>{
+    const done=!!checkState[k][i];
+    return `<li class="${done?'done-item':''}" data-k="${k}" data-i="${i}"><div class="chk ${done?'done':''}" data-k="${k}" data-i="${i}"></div><span>${item}</span></li>`;
+  }).join('')}</ul>`;
+  el.querySelectorAll('.chk').forEach(chk=>chk.addEventListener('click',e=>{
+    e.stopPropagation();
+    const {k,i}=chk.dataset;checkState[k][i]=!checkState[k][i];renderChecklist(k);
+  }));
+}
+
+function renderMistakes(k){
+  const n=THEMES[k];
+  document.getElementById('pane-mistakes').innerHTML=
+    `<ul class="mistake-list">${n.mistakes.map(m=>
+      `<li><span class="mistake-icon">⚠</span><div class="mistake-body"><strong>${m.title}</strong><p>${m.body}</p></div></li>`
+    ).join('')}</ul>`;
+}
+
+function renderOwners(k){
+  const n=THEMES[k];
+  if(!n.hasOwners){document.getElementById('pane-owners').innerHTML='';return;}
+  document.getElementById('pane-owners').innerHTML=n.owners.map(o=>`
+    <div class="owner-card">
+      <div class="owner-header">
+        <span class="owner-name">${o.name}</span>
+        <span class="owner-badge" style="color:${o.badgeColor};border-color:${o.badgeColor}">${o.badge}</span>
+      </div>
+      <p class="owner-desc">${o.desc}</p>
+      <ul class="owner-bullets">${o.bullets.map(b=>`<li>${b}</li>`).join('')}</ul>
+      ${o.note?`<p class="owner-note">${o.note}</p>`:''}
+    </div>`).join('');
+}
+
+function showPanel(key){
+  const n=THEMES[key];activeNode=key;
+  document.documentElement.style.setProperty('--tc',n.color);
+  document.getElementById('ipTitle').textContent=n.label;
+  document.getElementById('ipTitle').style.color=n.color;
+  document.getElementById('ipQuestion').textContent=n.question;
+  const ownerBtn=document.getElementById('ownerTabBtn');
+  ownerBtn.style.display=n.hasOwners?'':'none';
+  renderOverview(key);renderQuestions(key);renderChecklist(key);renderMistakes(key);renderOwners(key);
+  switchTab('overview');
+  document.getElementById('infoPanel').classList.add('visible');
+  // Only shift on desktop (panel is sidebar, not bottom sheet)
+  if(window.innerWidth >= 900){ offsetTarget = PANEL_W; }
+}
+function hidePanel(){
+  activeNode=null;
+  document.getElementById('infoPanel').classList.remove('visible');
+  offsetTarget = 0;
+}
+function switchTab(tabName){
+  document.querySelectorAll('.ip-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tabName));
+  document.querySelectorAll('.ip-pane').forEach(p=>p.classList.toggle('active',p.id===`pane-${tabName}`));
+}
+
+document.getElementById('ipClose').addEventListener('click',hidePanel);
+document.getElementById('ipTabs').addEventListener('click',e=>{if(e.target.dataset.tab)switchTab(e.target.dataset.tab);});
+canvas.addEventListener('touchend',e=>{
+  e.preventDefault();
+  const{x,y}=getXY(e.changedTouches[0].clientX,e.changedTouches[0].clientY);
+  const found=hitTest(x,y);
+  found?(activeNode===found?hidePanel():showPanel(found)):hidePanel();
+},{passive:false});
+canvas.addEventListener('mousemove',e=>{const{x,y}=getXY(e.clientX,e.clientY);canvas.style.cursor=hitTest(x,y)?'pointer':'default';});
+canvas.addEventListener('click',e=>{
+  const{x,y}=getXY(e.clientX,e.clientY);const found=hitTest(x,y);
+  found?(activeNode===found?hidePanel():showPanel(found)):hidePanel();
+});
+// Accessible mode toggle
+document.getElementById('a11yBtn').addEventListener('click',()=>{
+  const on = document.body.classList.toggle('a11y');
+  document.getElementById('a11yBtn').textContent = on ? 'Dark Mode' : 'Aa Mode';
+});
+window.addEventListener('resize',()=>{ canvasOffset=offsetTarget; setup(); });
+setup();render();
+</script>
+</body>
+</html>

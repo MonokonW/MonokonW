@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PRINCE2 · People &amp; Leadership</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
+:root{--bg:#090c12;--purple:#e879f9;--border-sub:rgba(232,121,249,0.08);--text-dim:#2e3a52;--text-mid:#4a5878;--text-body:#7a8aaa;--text-bright:#b0bcd0;--panel-bg:#0d1120;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;height:100%;overflow:hidden;}
+body{background:var(--bg);font-family:"DM Mono",monospace;color:var(--text-bright);display:flex;flex-direction:column;}
+body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(80,110,180,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(80,110,180,0.035) 1px,transparent 1px);background-size:28px 28px;pointer-events:none;z-index:0;}
+header{flex-shrink:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:calc(env(safe-area-inset-top,0px) + 10px) 3rem 6px;position:relative;z-index:2;}
+.back-link{position:absolute;left:1rem;top:50%;transform:translateY(-50%);display:inline-flex;align-items:center;gap:5px;font-size:clamp(0.36rem,1.4vw,0.48rem);letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);text-decoration:none;transition:color 0.2s;}
+.back-link:hover{color:var(--purple);}
+.back-link::before{content:"←";font-size:0.7rem;}
+.header-eyebrow{font-size:clamp(0.38rem,1.4vw,0.46rem);letter-spacing:0.22em;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;}
+header h1{font-family:"Playfair Display",serif;font-size:clamp(0.72rem,3vw,1rem);letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim);}
+header h1 span{color:var(--purple);opacity:0.8;}
+.header-sub{font-size:clamp(0.36rem,1.4vw,0.46rem);letter-spacing:0.14em;text-transform:uppercase;color:#1e2636;margin-top:3px;}
+.toolbar{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:4px 1rem;border-bottom:1px solid var(--border-sub);position:relative;z-index:2;flex-wrap:wrap;}
+.view-tab{background:none;border:1px solid var(--border-sub);border-radius:3px;cursor:pointer;font-family:"DM Mono",monospace;font-size:clamp(0.33rem,1.2vw,0.44rem);letter-spacing:0.10em;text-transform:uppercase;color:var(--text-mid);padding:0.2rem 0.6rem;transition:color 0.2s,border-color 0.2s,background 0.2s;white-space:nowrap;}
+.view-tab.active{color:var(--purple);border-color:rgba(232,121,249,0.4);background:rgba(232,121,249,0.06);}
+.main-wrap{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;z-index:1;scrollbar-width:thin;scrollbar-color:#1e2838 transparent;padding:1rem 1rem 6rem;}
+.section-heading{font-size:clamp(0.34rem,1.3vw,0.46rem);letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.7rem;padding-bottom:0.35rem;border-bottom:1px solid var(--border-sub);}
+.section-heading span{color:var(--purple);opacity:0.55;}
+.intro-text{font-size:clamp(0.52rem,1.9vw,0.64rem);color:var(--text-body);line-height:1.75;margin-bottom:1.2rem;max-width:720px;}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:1.2rem;}
+.card{background:rgba(255,255,255,0.02);border:1px solid var(--border-sub);border-radius:6px;padding:0.75rem 0.85rem;cursor:pointer;transition:border-color 0.2s,background 0.2s;animation:fadeUp 0.35s ease forwards;opacity:0;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.card:hover,.card.active{border-color:rgba(232,121,249,0.35);background:rgba(232,121,249,0.05);}
+.card-icon{font-size:1.4rem;margin-bottom:0.4rem;}
+.card-title{font-size:clamp(0.48rem,1.8vw,0.6rem);color:var(--purple);font-weight:500;margin-bottom:0.2rem;}
+.card-sub{font-size:clamp(0.34rem,1.2vw,0.44rem);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.35rem;}
+.card-desc{font-size:clamp(0.44rem,1.6vw,0.56rem);color:var(--text-body);line-height:1.6;}
+.sit-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;max-width:480px;margin-top:0.5rem;}
+.sit-cell{background:rgba(232,121,249,0.04);border:1px solid rgba(232,121,249,0.1);border-radius:4px;padding:0.4rem 0.6rem;}
+.sit-label{font-size:clamp(0.3rem,1.1vw,0.4rem);letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,121,249,0.4);margin-bottom:2px;}
+.sit-val{font-size:clamp(0.44rem,1.6vw,0.55rem);color:var(--text-body);}
+.flow-wrap{overflow-x:auto;scrollbar-width:thin;scrollbar-color:#1e2838 transparent;margin-bottom:1rem;}
+.detail-panel{position:fixed;bottom:0;left:0;right:0;background:var(--panel-bg);border-top:1px solid rgba(232,121,249,0.2);transform:translateY(100%);transition:transform 0.32s cubic-bezier(0.32,0.72,0,1);z-index:100;max-height:52vh;display:flex;flex-direction:column;}
+.detail-panel.visible{transform:translateY(0);}
+.dp-head{display:flex;align-items:flex-start;justify-content:space-between;padding:0.7rem 1.1rem 0;flex-shrink:0;}
+.dp-eyebrow{font-size:clamp(0.34rem,1.3vw,0.44rem);letter-spacing:0.14em;text-transform:uppercase;color:rgba(232,121,249,0.45);margin-bottom:3px;}
+.dp-title{font-family:"Playfair Display",serif;font-size:clamp(0.82rem,3.5vw,1.05rem);color:var(--purple);}
+.dp-close{background:none;border:none;color:#3a4a68;font-size:1.1rem;cursor:pointer;padding:0 0 0 0.8rem;flex-shrink:0;}
+.dp-tabs{display:flex;border-bottom:1px solid rgba(232,121,249,0.1);flex-shrink:0;margin-top:0.5rem;overflow-x:auto;scrollbar-width:none;}
+.dp-tab{background:none;border:none;border-bottom:2px solid transparent;color:var(--text-mid);font-family:"DM Mono",monospace;font-size:clamp(0.34rem,1.4vw,0.48rem);letter-spacing:0.09em;text-transform:uppercase;padding:0.32rem 0.7rem;cursor:pointer;white-space:nowrap;transition:color 0.2s,border-color 0.2s;}
+.dp-tab.active{color:var(--purple);border-bottom-color:var(--purple);}
+.dp-body{flex:1;overflow-y:auto;padding:0.65rem 1.1rem;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 0.65rem);scrollbar-width:thin;scrollbar-color:#1e2838 transparent;}
+.dp-desc{font-size:clamp(0.5rem,1.9vw,0.62rem);color:#5a6a88;line-height:1.75;letter-spacing:0.02em;margin-bottom:0.55rem;}
+.dp-rule{font-size:clamp(0.48rem,1.8vw,0.6rem);color:rgba(232,121,249,0.5);line-height:1.7;border-left:2px solid rgba(232,121,249,0.2);padding-left:0.6rem;margin-bottom:0.55rem;font-style:italic;}
+.dp-list{list-style:none;}
+.dp-list li{display:flex;gap:0.5rem;align-items:flex-start;font-size:clamp(0.48rem,1.8vw,0.6rem);color:#5a6a88;line-height:1.65;letter-spacing:0.02em;margin-bottom:0.3rem;}
+.dp-list li::before{content:"▸";color:var(--purple);opacity:0.55;flex-shrink:0;margin-top:1px;font-size:0.5rem;}
+</style>
+</head>
+<body>
+<header>
+  <a class="back-link" href="index.html">Theme Map</a>
+  <div>
+    <div class="header-eyebrow">PRINCE2 7th Edition · People Element</div>
+    <h1>People &amp; <span>Leadership</span></h1>
+    <div class="header-sub">leadership · stakeholders · team dynamics · change · tap to explore</div>
+  </div>
+</header>
+<div class="toolbar" id="toolbar">
+  <button class="view-tab active" data-view="leadership">Leadership</button>
+  <button class="view-tab" data-view="stakeholders">Stakeholders</button>
+  <button class="view-tab" data-view="team">Team Dynamics</button>
+  <button class="view-tab" data-view="change">Change Management</button>
+</div>
+<div class="main-wrap" id="mainWrap">
+  <div id="view-leadership"></div>
+  <div id="view-stakeholders" style="display:none"></div>
+  <div id="view-team"         style="display:none"></div>
+  <div id="view-change"       style="display:none"></div>
+</div>
+<div class="detail-panel" id="detailPanel">
+  <div class="dp-head">
+    <div><div class="dp-eyebrow" id="dpEyebrow"></div><div class="dp-title" id="dpTitle"></div></div>
+    <button class="dp-close" id="dpClose">✕</button>
+  </div>
+  <div class="dp-tabs" id="dpTabs"></div>
+  <div class="dp-body"  id="dpBody"></div>
+</div>
+<script>
+// All string values use double-quotes to avoid apostrophe escaping issues
+
+const LEADERSHIP_STYLES = [
+  {
+    id:"directive", icon:"🎯", name:"Directive",
+    sub:"New team / crisis / tight deadline",
+    eyebrow:"Leadership Style · Directive",
+    desc:"The leader makes decisions and gives clear instructions. Appropriate when speed is critical, team members are inexperienced, or the situation requires single-point accountability.",
+    rule:"Directive leadership is most effective when used deliberately and temporarily — not as a default. Over-use creates dependency and kills initiative.",
+    bullets:["Clear instructions with little room for interpretation","PM makes the final call on all significant decisions","Fast decision-making in time-pressured situations","Risk: team disengagement if used beyond the right context","PRINCE2 link: Managing by exception at a stage where tolerances are tight"],
+    when_use:"Stage 1, crisis management, or onboarding new team members.",
+  },
+  {
+    id:"coaching", icon:"🌱", name:"Coaching",
+    sub:"Developing team capability / growing individuals",
+    eyebrow:"Leadership Style · Coaching",
+    desc:"The leader focuses on developing individuals through questions, feedback, and guided reflection. The team member grows capability while the PM invests in long-term performance.",
+    rule:"Coaching takes more time up front but pays dividends in team autonomy and quality of thinking. It is the style most aligned with PRINCE2's principle of learning from experience.",
+    bullets:["Questions rather than answers: 'What would you do in this situation?'","Feedback is frequent, specific, and two-way","PM builds team capability for future stages and projects","Connects to PRINCE2 Learn from Experience principle","Slower in the short term, stronger in the long term"],
+    when_use:"Mid-project when individual team members need to develop confidence or new skills.",
+  },
+  {
+    id:"collaborative", icon:"🤝", name:"Collaborative",
+    sub:"Complex decisions / high-expertise team",
+    eyebrow:"Leadership Style · Collaborative",
+    desc:"The leader co-creates solutions with the team. Decisions are made jointly, drawing on the collective expertise of all members. PRINCE2 7 draws on agile principles here — co-creation and shared ownership.",
+    rule:"Collaboration works best when the team has high expertise and genuine trust. In low-trust environments it produces indecision, not solutions.",
+    bullets:["All voices heard before decisions are made","PM facilitates rather than directs","Builds team ownership and commitment to decisions","PRINCE2 7 link: agile influence — feedback, co-creation, iterative working","Risk: can slow decision-making if consensus is hard to reach"],
+    when_use:"Complex planning sessions, retrospectives, or when the PM does not hold the best answer.",
+  },
+  {
+    id:"delegating", icon:"🚀", name:"Delegating",
+    sub:"High-trust, high-skill senior team",
+    eyebrow:"Leadership Style · Delegating",
+    desc:"The leader assigns responsibility and then steps back. The team has full autonomy within agreed tolerances. The PM focuses on the bigger picture and stage-level governance.",
+    rule:"Delegation without clear tolerances and checkpoints is abdication. The PM must define the boundaries — then genuinely let go within them.",
+    bullets:["Clear Work Package with agreed scope, quality, and tolerances","PM available but not involved in day-to-day execution","Team Manager has real decision-making authority within bounds","Connects directly to PRINCE2 Manage by Exception principle","Frees PM to focus on stakeholders, risk, and next-stage planning"],
+    when_use:"Experienced Team Managers handling well-defined Work Packages in later project stages.",
+  },
+];
+
+const STAKEHOLDERS = [
+  {
+    id:"sh1", name:"Project Board / Executive", power:"High", interest:"High", attitude:"Champion",
+    pc:"#e879f9", ac:"#34d399", px:0.80, py:0.85,
+    eyebrow:"Stakeholder · Project Board",
+    desc:"The Project Board holds ultimate authority over the project. The Executive owns the Business Case. These stakeholders have the power to stop, change, or accelerate the project.",
+    rule:"The worst outcome with the Project Board is a surprise. Proactive communication and early escalation of problems builds the trust needed to get fast decisions when they matter.",
+    bullets:["Highlight Reports at agreed frequency — no more, no less","Exception Reports raised before tolerances are breached, never after","End Stage Reviews with enough preparation time for Board to read and reflect","One-to-one with the Executive before any difficult Board meeting"],
+  },
+  {
+    id:"sh2", name:"End Users / Customer", power:"Medium", interest:"High", attitude:"Supporter",
+    pc:"#f59e0b", ac:"#818cf8", px:0.72, py:0.50,
+    eyebrow:"Stakeholder · End Users",
+    desc:"End users are the people who will use the project outputs in their daily work. Their adoption drives benefits realisation. A technically perfect product that users resist is a failed project.",
+    rule:"Users know their work better than the project team. Involve them in defining acceptance criteria from the start — not just at UAT.",
+    bullets:["Named Senior User on the Project Board representing the user community","User involvement in quality reviews of key products","UAT planned as a genuine acceptance gate, not a rubber stamp","Change management approach designed around user adoption"],
+  },
+  {
+    id:"sh3", name:"Operations / BAU Team", power:"Medium", interest:"Medium", attitude:"Neutral",
+    pc:"#f59e0b", ac:"#f59e0b", px:0.45, py:0.45,
+    eyebrow:"Stakeholder · Operations / BAU",
+    desc:"The operational team that will inherit the project outputs and support them post-closure. Often overlooked during delivery, they have significant informal power.",
+    rule:"Operations is not just a handover recipient — they are a stakeholder who must co-design the support model.",
+    bullets:["Involve in product acceptance criteria for operability","Include in go-live and handover planning from Stage 2","Address support cost and effort concerns transparently","Follow-on action recommendations formally agreed before closure"],
+  },
+  {
+    id:"sh4", name:"Sponsor / Corporate Management", power:"High", interest:"Low", attitude:"Neutral",
+    pc:"#e879f9", ac:"#f59e0b", px:0.28, py:0.85,
+    eyebrow:"Stakeholder · Corporate Management",
+    desc:"Senior leaders above the Project Board. They have high authority but low day-to-day interest. They need to trust that the project is on track without being drawn into operational detail.",
+    rule:"Corporate stakeholders disengage when they receive too much operational noise. Give them strategic indicators only.",
+    bullets:["Monthly or stage-boundary-only briefings","Business Case health summary prominently visible","Early warning if project is heading for an Exception Plan","No surprises — brief before the formal report arrives"],
+  },
+  {
+    id:"sh5", name:"External Supplier / Vendor", power:"Medium", interest:"High", attitude:"Supporter",
+    pc:"#f59e0b", ac:"#818cf8", px:0.62, py:0.55,
+    eyebrow:"Stakeholder · External Supplier",
+    desc:"Third-party organisations providing specialist resources or services. Their delivery performance is a major risk driver. The Senior Supplier role on the Project Board is the formal accountability mechanism.",
+    rule:"The contract defines the floor, not the ceiling of the relationship. Suppliers who feel like partners surface problems earlier.",
+    bullets:["Senior Supplier on Project Board for significant suppliers","Contractual milestone gates with clear acceptance criteria","Checkpoint Reports from Team Managers who are supplier staff","Risk review specifically covering vendor delivery risk at each stage"],
+  },
+  {
+    id:"sh6", name:"Regulatory / Compliance Body", power:"High", interest:"Low", attitude:"Neutral",
+    pc:"#e879f9", ac:"#f59e0b", px:0.22, py:0.80,
+    eyebrow:"Stakeholder · Regulatory Body",
+    desc:"External authorities whose requirements must be met. They have high power (can block go-live) but low direct interest in day-to-day delivery.",
+    rule:"Regulatory requirements discovered at go-live cause the most expensive rework. Engage compliance experts in Stage 1.",
+    bullets:["Compliance requirements mapped in Product Descriptions from the start","Legal and compliance counsel involved in quality reviews of high-risk products","Compliance evidence collected continuously, not at the end","Regulatory change monitored as a live risk throughout the project"],
+  },
+];
+
+const TUCKMAN = [
+  {
+    id:"forming", label:"Forming", color:"#818cf8",
+    eyebrow:"Team Stage · Forming",
+    desc:"The team comes together for the first time. Members are polite, cautious, and uncertain about their roles and each other. Limited conflict but also limited productivity.",
+    rule:"The PM job at Forming is to provide clarity — on purpose, roles, ways of working, and success criteria. Ambiguity at this stage creates anxiety that slows the team down.",
+    bullets:["Define project purpose, team norms, and individual roles clearly","Introduce a team charter or working agreement","High directive leadership is appropriate here","People are on best behaviour — genuine views emerge later","PRINCE2 link: Team formation at project and stage start"],
+    pm:"Be directive. Create structure. Make people feel safe and clear.",
+  },
+  {
+    id:"storming", label:"Storming", color:"#ef4444",
+    eyebrow:"Team Stage · Storming",
+    desc:"Conflict emerges as people assert their views, challenge the structure, and test boundaries. This is normal and healthy — but must be managed constructively.",
+    rule:"The worst PM response to Storming is to shut it down. Surface the conflict, facilitate honest dialogue, and use it to improve the team ways of working.",
+    bullets:["Conflict over priorities, working styles, or decisions is normal here","PM should facilitate — not avoid — difficult conversations","Psychological safety is the precondition for constructive storming","Teams that storm constructively emerge stronger","Unresolved storming resurfaces later at the worst possible time"],
+    pm:"Facilitate dialogue. Name the tensions. Do not let disagreements go underground.",
+  },
+  {
+    id:"norming", label:"Norming", color:"#f59e0b",
+    eyebrow:"Team Stage · Norming",
+    desc:"The team establishes shared norms, resolves earlier tensions, and develops genuine trust and collaboration. Productivity starts to rise.",
+    rule:"Norming is fragile — a new team member, a major setback, or a significant scope change can throw a team back into Storming.",
+    bullets:["Shared working practices are established and respected","Trust grows — people say what they actually think","PM can shift from directive to coaching or collaborative style","Celebrate early wins to reinforce positive team identity","Monitor for events that could disrupt team stability"],
+    pm:"Reinforce what is working. Celebrate progress. Shift leadership style to coaching.",
+  },
+  {
+    id:"performing", label:"Performing", color:"#34d399",
+    eyebrow:"Team Stage · Performing",
+    desc:"The team operates with high autonomy, trust, and effectiveness. Problems are solved collectively, decisions are made at the right level, and the PM can delegate with confidence.",
+    rule:"Performing teams still need the PM to protect them from external disruption and keep the strategic direction clear. Even high-performing teams need a leader.",
+    bullets:["Team manages itself within agreed tolerances","PM in delegating mode — focus on strategic issues and stakeholders","High output, high quality, low drama","Team proactively surfaces risks and lessons","PRINCE2 link: Work Packages with maximum autonomy within clear boundaries"],
+    pm:"Get out of the way. Protect the team from external pressure. Stay visible but not directive.",
+  },
+  {
+    id:"adjourning", label:"Adjourning", color:"#e879f9",
+    eyebrow:"Team Stage · Adjourning",
+    desc:"The project ends and the team disbands. If managed well, this is a constructive closure — lessons captured, contributions recognised, people leave with positive professional relationships.",
+    rule:"Closure is as important as kickoff. Teams that are never formally closed miss the opportunity to capture lessons, celebrate achievement, and part well.",
+    bullets:["Formal closure meeting with genuine recognition of contributions","Lessons Report captures team dynamics insights for future projects","Line managers briefed on team member performance and growth","PRINCE2 link: End Project Report and Lessons Report","People need psychological closure — not just project closure"],
+    pm:"Celebrate. Recognise. Capture lessons. Close well.",
+  },
+];
+
+const EI = [
+  {
+    id:"aware", name:"Self-Awareness", domain:"Personal", dc:"#818cf8",
+    eyebrow:"Emotional Intelligence · Self-Awareness",
+    desc:"The ability to accurately recognise your own emotions and how they affect your thoughts and behaviour. A self-aware PM knows when they are under pressure and how that changes their leadership style.",
+    rule:"Self-awareness is the foundation of all other emotional intelligence. You cannot manage what you cannot see.",
+    bullets:["Recognise your emotional state in real time","Understand how stress changes your communication style","Seek honest feedback from trusted team members","Know your triggers — and their effect on those around you","Regular reflection: how did I show up in that meeting?"],
+  },
+  {
+    id:"selfreg", name:"Self-Regulation", domain:"Personal", dc:"#818cf8",
+    eyebrow:"Emotional Intelligence · Self-Regulation",
+    desc:"The ability to manage disruptive emotions and impulses. A PM who can stay calm under pressure models the behaviour they need from their team and makes better decisions in difficult moments.",
+    rule:"Self-regulation is not the absence of emotion — it is the choice of what to do with it.",
+    bullets:["Pause before reacting to difficult news or challenging behaviour","Reframe setbacks as information, not personal failures","Manage your energy — fatigue degrades self-regulation significantly","Create space between stimulus and response","Model the emotional tone you want the team to adopt"],
+  },
+  {
+    id:"motiv", name:"Motivation", domain:"Personal", dc:"#818cf8",
+    eyebrow:"Emotional Intelligence · Motivation",
+    desc:"A drive to achieve beyond external rewards. Motivated PMs energise those around them and maintain momentum through difficult stages.",
+    rule:"Motivation is contagious — so is its absence. If the PM has lost belief in the project, the team will sense it before they are told.",
+    bullets:["Connect the team daily work to the project ultimate purpose","Celebrate small wins — especially in long or difficult stages","Maintain personal energy through the project lifecycle","Revisit the Business Case when motivation dips","Be honest about difficulties — pretending everything is fine destroys credibility"],
+  },
+  {
+    id:"empathy", name:"Empathy", domain:"Social", dc:"#34d399",
+    eyebrow:"Emotional Intelligence · Empathy",
+    desc:"The ability to understand and share the feelings of others. Empathy enables the PM to read stakeholder concerns accurately and anticipate resistance before it becomes a problem.",
+    rule:"Empathy is not agreement. You can understand someone perspective deeply without endorsing it. This is one of the most powerful stakeholder management tools available.",
+    bullets:["Listen actively — not just to respond, but to understand","Ask how people are experiencing the project, not just what they think of it","Read the room before important meetings","Stakeholder resistance often has an emotional root — diagnose before you prescribe","Check in with team members individually, not just in group settings"],
+  },
+  {
+    id:"social", name:"Social Skills", domain:"Social", dc:"#34d399",
+    eyebrow:"Emotional Intelligence · Social Skills",
+    desc:"The ability to manage relationships and build networks effectively. For a PM, social skill is the engine of stakeholder management, team cohesion, and organisational influence.",
+    rule:"Social skill is not about being popular. It is about getting things done through people — building the trust and relationships that enable collaboration under pressure.",
+    bullets:["Build relationships before you need them","Communicate clearly and adapt style to the audience","Navigate conflict constructively — not avoid it","Influence without formal authority is a core PM skill","Invest in relationships across organisational boundaries — projects cross departments"],
+  },
+];
+
+const CHANGE_STAGES = [
+  {
+    id:"awareness", label:"Awareness", color:"#818cf8",
+    eyebrow:"Change Stage · Awareness",
+    desc:"People become aware that a change is coming. The most critical stage for communication — if the project team does not fill the information vacuum, rumour will.",
+    rule:"Nature abhors an information vacuum. If you do not tell people what is happening, they will invent their own version — usually worse than the truth.",
+    bullets:["Clear, honest communication about what is changing and why","Address what does this mean for me directly","Use the Business Case narrative — not just project announcements","Senior sponsors visible and vocal at this stage","Acknowledge that uncertainty exists rather than overpromising clarity"],
+  },
+  {
+    id:"understanding", label:"Understanding", color:"#f59e0b",
+    eyebrow:"Change Stage · Understanding",
+    desc:"People begin to understand what the change means specifically for their role and day-to-day work. Anxiety may rise as the personal impact becomes clearer.",
+    rule:"Understanding is not the same as acceptance. People can understand a change completely and still resist it.",
+    bullets:["Role-specific communication: here is what changes for you","Q&A sessions, workshops, and direct conversations — not just broadcasts","Address concerns honestly — avoid spin","Identify and engage informal opinion leaders within user groups","Change champions can bridge between the project and the affected community"],
+  },
+  {
+    id:"acceptance", label:"Acceptance", color:"#fb923c",
+    eyebrow:"Change Stage · Acceptance",
+    desc:"People accept — at least intellectually — that the change is happening and that it is legitimate. This is different from enthusiasm.",
+    rule:"Acceptance can be achieved without genuine buy-in. Watch for passive compliance — people saying yes while doing the minimum needed.",
+    bullets:["Senior stakeholder endorsement is powerful at this stage","Acknowledge losses explicitly — change always involves giving something up","Involve people in shaping how the change is implemented locally","Address the why now question honestly","Track attitude through surveys or one-to-ones, not just by assuming it"],
+  },
+  {
+    id:"adoption", label:"Adoption", color:"#34d399",
+    eyebrow:"Change Stage · Adoption",
+    desc:"People begin using the new ways of working in practice. This is when the project benefits begin to materialise — and when the gap between theory and reality becomes visible.",
+    rule:"Adoption is where most change initiatives fail. The go-live event is not the end — it is the beginning of the hardest part.",
+    bullets:["Hypercare support available immediately at go-live","Quick wins made visible to reinforce adoption","Frontline managers held accountable for team adoption","Issues surfaced and resolved quickly — early adopters need to see responsiveness","Benefits tracking begins — adoption without measurement is invisible"],
+  },
+  {
+    id:"sustained", label:"Sustained", color:"#e879f9",
+    eyebrow:"Change Stage · Sustained Change",
+    desc:"The new way of working becomes the normal way. Old habits are fully replaced. Benefits are realising consistently. The change has landed.",
+    rule:"Sustained change requires the old way to become impossible or very difficult. If people can easily revert, they will — especially under pressure.",
+    bullets:["Old systems or processes formally decommissioned","Performance metrics updated to reflect new baseline","Benefits review scheduled and resourced post-project","Lessons about change management captured for future projects","PRINCE2 link: Follow-on action recommendations and Benefits Management Approach handover"],
+  },
+];
+
+const RESISTANCE = [
+  {
+    id:"rational", type:"Rational", name:"Logical objections",
+    eyebrow:"Resistance Type · Rational",
+    desc:"The person genuinely believes the change is a bad idea — wrong solution, poor timing, or misaligned with business need. This is the most tractable form of resistance.",
+    rule:"Listen and engage with the substance. Rational objections sometimes contain important information the project needs.",
+    bullets:["Take the concern seriously — it might be right","Check if the objection reveals a flaw in the design","Provide evidence and reasoning, not just reassurance","Involve the person in solving the problem they have identified"],
+  },
+  {
+    id:"emotional", type:"Emotional", name:"Fear and anxiety",
+    eyebrow:"Resistance Type · Emotional",
+    desc:"The person fears losing something — status, competence, relationships, or certainty. This is the most common form of resistance and the least addressed.",
+    rule:"Acknowledge the loss explicitly. Empathy is the primary tool here, not logic. People need to feel heard before they can hear your argument.",
+    bullets:["Name the loss: I understand this changes how you work significantly","Do not minimise or dismiss emotional reactions","Give people time to process before expecting buy-in","One-to-one conversations are more effective than group sessions for emotional resistance"],
+  },
+  {
+    id:"political", type:"Political", name:"Vested interests",
+    eyebrow:"Resistance Type · Political",
+    desc:"The person stands to lose influence, resources, or power as a result of the change. Often expressed as rational concern but actually driven by self-interest.",
+    rule:"Understand the political landscape before the project starts. Find ways to reframe the change as an opportunity for the stakeholder, or negotiate a trade-off.",
+    bullets:["Map influence carefully — not just formal authority","Understand what each powerful stakeholder gains and loses","Senior sponsor engagement is often needed to neutralise political resistance","Do not mistake political resistance for rational disagreement — they need different responses"],
+  },
+  {
+    id:"habitual", type:"Habitual", name:"This is how we do things",
+    eyebrow:"Resistance Type · Habitual",
+    desc:"Resistance based on inertia rather than active objection. People have always done it this way. The change requires cognitive effort and disruption to established routine.",
+    rule:"Make the new way easier than the old way. Reduce friction. Celebrate early adopters visibly. Remove the ability to revert if adoption is critical.",
+    bullets:["Design the new process to be as frictionless as possible","Provide training that builds genuine competence, not just awareness","Early adopters and peer influence are more effective than top-down mandates","Remove the old way where possible — make reversion impractical"],
+  },
+];
+
+// ── VIEW SWITCHING ────────────────────────────────────────────────────────
+document.getElementById("toolbar").addEventListener("click", e => {
+  const btn = e.target.closest(".view-tab");
+  if(!btn) return;
+  document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+  btn.classList.add("active");
+  ["leadership","stakeholders","team","change"].forEach(v => {
+    document.getElementById("view-"+v).style.display = v===btn.dataset.view ? "" : "none";
+  });
+  closePanel();
+});
+
+// ── PANEL HELPERS ─────────────────────────────────────────────────────────
+function buildPanel(eyebrow, title, tabs, renderer) {
+  document.getElementById("dpEyebrow").textContent = eyebrow;
+  document.getElementById("dpTitle").textContent   = title;
+  const tabsEl = document.getElementById("dpTabs");
+  tabsEl.innerHTML = tabs.map((t,i) =>
+    `<button class="dp-tab${i===0?" active":""}" data-tab="${t.id}">${t.label}</button>`
+  ).join("");
+  tabsEl.querySelectorAll(".dp-tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      tabsEl.querySelectorAll(".dp-tab").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("dpBody").innerHTML = renderer(btn.dataset.tab);
+    });
+  });
+  document.getElementById("dpBody").innerHTML = renderer(tabs[0].id);
+  document.getElementById("detailPanel").classList.add("visible");
+}
+function closePanel() {
+  document.getElementById("detailPanel").classList.remove("visible");
+  document.querySelectorAll(".card").forEach(c => c.classList.remove("active"));
+}
+document.getElementById("dpClose").addEventListener("click", closePanel);
+document.getElementById("mainWrap").addEventListener("click", closePanel);
+
+function listHtml(arr) {
+  return `<ul class="dp-list">${arr.map(b=>`<li>${b}</li>`).join("")}</ul>`;
+}
+
+// ── SVG HELPER ────────────────────────────────────────────────────────────
+const NS = "http://www.w3.org/2000/svg";
+function svgEl(tag, attrs) {
+  const e = document.createElementNS(NS, tag);
+  Object.entries(attrs).forEach(([k,v]) => e.setAttribute(k,v));
+  return e;
+}
+
+// ── LEADERSHIP VIEW ───────────────────────────────────────────────────────
+function renderLeadership() {
+  const el = document.getElementById("view-leadership");
+  el.innerHTML = `
+    <div class="section-heading">Adaptive Leadership Styles <span>· PRINCE2 7th edition · tap any style</span></div>
+    <p class="intro-text">PRINCE2 7 recognises that no single leadership style fits every situation. Effective project managers adapt their approach based on team capability, project stage, and context.</p>
+    <div class="card-grid" id="styleGrid"></div>
+    <div class="section-heading" style="margin-top:0.8rem">Situational guide <span>· when to use which style</span></div>
+    <div class="sit-grid">
+      <div class="sit-cell"><div class="sit-label">New team, unclear roles</div><div class="sit-val">→ Directive</div></div>
+      <div class="sit-cell"><div class="sit-label">Growing individual skill</div><div class="sit-val">→ Coaching</div></div>
+      <div class="sit-cell"><div class="sit-label">Complex decision, expert team</div><div class="sit-val">→ Collaborative</div></div>
+      <div class="sit-cell"><div class="sit-label">Experienced, trusted team</div><div class="sit-val">→ Delegating</div></div>
+      <div class="sit-cell"><div class="sit-label">Crisis or breach of tolerance</div><div class="sit-val">→ Directive</div></div>
+      <div class="sit-cell"><div class="sit-label">Retrospective / lessons review</div><div class="sit-val">→ Collaborative</div></div>
+      <div class="sit-cell"><div class="sit-label">Stage planning with senior TMs</div><div class="sit-val">→ Collaborative / Delegating</div></div>
+      <div class="sit-cell"><div class="sit-label">Onboarding new team member</div><div class="sit-val">→ Coaching</div></div>
+    </div>`;
+
+  const grid = document.getElementById("styleGrid");
+  grid.innerHTML = LEADERSHIP_STYLES.map((s,i) => `
+    <div class="card" data-id="${s.id}" style="animation-delay:${i*0.06}s">
+      <div class="card-icon">${s.icon}</div>
+      <div class="card-title">${s.name}</div>
+      <div class="card-sub">${s.sub}</div>
+      <div class="card-desc">${s.desc.substring(0,90)}…</div>
+    </div>`).join("");
+
+  grid.querySelectorAll(".card").forEach(card => {
+    card.addEventListener("click", e => {
+      e.stopPropagation();
+      grid.querySelectorAll(".card").forEach(c => c.classList.remove("active"));
+      card.classList.add("active");
+      const s = LEADERSHIP_STYLES.find(x => x.id===card.dataset.id);
+      buildPanel(s.eyebrow, s.name,
+        [{id:"how",label:"How & when"},{id:"pitfalls",label:"Watch out"}],
+        tab => {
+          if(tab==="how") return `<p class="dp-rule">${s.rule}</p>${listHtml(s.bullets)}<div style="margin-top:0.4rem;font-size:clamp(0.3rem,1.1vw,0.4rem);letter-spacing:0.1em;text-transform:uppercase;color:#2e3a52">Best used</div><p class="dp-desc" style="margin-top:3px">${s.when_use}</p>`;
+          return `<p class="dp-desc">Misapplying this style is one of the most common PM mistakes. Consider when you might be defaulting to it out of habit rather than choice.</p>`;
+        });
+    });
+  });
+}
+
+// ── STAKEHOLDERS VIEW ─────────────────────────────────────────────────────
+function renderStakeholders() {
+  const el = document.getElementById("view-stakeholders");
+  el.innerHTML = `
+    <div class="section-heading">Power / Interest Matrix <span>· tap any stakeholder</span></div>
+    <p class="intro-text">PRINCE2 7 requires a Stakeholder Engagement Approach that maps each stakeholder power, interest, and current attitude — then defines a tailored strategy for each.</p>
+    <div class="flow-wrap"><svg id="powerSvg" style="max-width:100%;display:block;overflow:visible"></svg></div>
+    <div class="section-heading" style="margin-top:0.8rem">Stakeholder profiles <span>· engagement strategies</span></div>
+    <div class="card-grid" id="shList"></div>`;
+
+  drawPowerMatrix();
+
+  const list = document.getElementById("shList");
+  list.innerHTML = STAKEHOLDERS.map((s,i) => `
+    <div class="card" data-id="${s.id}" style="animation-delay:${i*0.05}s">
+      <div class="card-title">${s.name}</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:0.3rem">
+        <span style="font-size:clamp(0.28rem,1vw,0.38rem);letter-spacing:0.08em;text-transform:uppercase;padding:0.08rem 0.3rem;border-radius:999px;border:1px solid ${s.pc}44;color:${s.pc}">Power: ${s.power}</span>
+        <span style="font-size:clamp(0.28rem,1vw,0.38rem);letter-spacing:0.08em;text-transform:uppercase;padding:0.08rem 0.3rem;border-radius:999px;border:1px solid ${s.ac}44;color:${s.ac}">${s.attitude}</span>
+      </div>
+      <div class="card-desc">${s.desc.substring(0,80)}…</div>
+    </div>`).join("");
+
+  list.querySelectorAll(".card").forEach(card => {
+    card.addEventListener("click", e => {
+      e.stopPropagation();
+      list.querySelectorAll(".card").forEach(c => c.classList.remove("active"));
+      card.classList.add("active");
+      const s = STAKEHOLDERS.find(x => x.id===card.dataset.id);
+      buildPanel(s.eyebrow, s.name,
+        [{id:"strategy",label:"Strategy"},{id:"tips",label:"Key actions"}],
+        tab => {
+          if(tab==="strategy") return `<p class="dp-desc">${s.desc}</p><p class="dp-rule">${s.rule}</p>`;
+          return listHtml(s.bullets);
+        });
+    });
+  });
+}
+
+function drawPowerMatrix() {
+  const svg = document.getElementById("powerSvg");
+  const W=420, H=280, PAD=52;
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  svg.setAttribute("width",W); svg.setAttribute("height",H);
+
+  const quads = [
+    {x:PAD,y:PAD,w:(W-PAD)/2,h:(H-PAD)/2,fill:"rgba(245,158,11,0.05)",label:"Keep satisfied"},
+    {x:PAD+(W-PAD)/2,y:PAD,w:(W-PAD)/2,h:(H-PAD)/2,fill:"rgba(232,121,249,0.08)",label:"Manage closely"},
+    {x:PAD,y:PAD+(H-PAD)/2,w:(W-PAD)/2,h:(H-PAD)/2,fill:"rgba(80,120,220,0.04)",label:"Monitor"},
+    {x:PAD+(W-PAD)/2,y:PAD+(H-PAD)/2,w:(W-PAD)/2,h:(H-PAD)/2,fill:"rgba(52,211,153,0.05)",label:"Keep informed"},
+  ];
+  quads.forEach(q => {
+    svg.appendChild(svgEl("rect",{x:q.x,y:q.y,width:q.w,height:q.h,fill:q.fill,stroke:"rgba(80,120,220,0.07)","stroke-width":"0.5"}));
+    const t = svgEl("text",{x:q.x+q.w/2,y:q.y+q.h/2,"font-size":"7","font-family":"DM Mono,monospace",fill:"rgba(80,120,220,0.2)","text-anchor":"middle","dominant-baseline":"middle"});
+    t.textContent=q.label; svg.appendChild(t);
+  });
+  [["Low",H-10],["High",PAD+12]].forEach(([l,y])=>{
+    const t=svgEl("text",{x:PAD-6,y,"font-size":"6.5","font-family":"DM Mono,monospace",fill:"rgba(80,120,220,0.4)","text-anchor":"end","dominant-baseline":"middle"});
+    t.textContent=l; svg.appendChild(t);
+  });
+  [["Low",PAD+15],["High",W-8]].forEach(([l,x])=>{
+    const t=svgEl("text",{x,y:H,"font-size":"6.5","font-family":"DM Mono,monospace",fill:"rgba(80,120,220,0.4)","text-anchor":"middle"});
+    t.textContent=l; svg.appendChild(t);
+  });
+  const yt=svgEl("text",{x:10,y:(PAD+H)/2,"font-size":"6","font-family":"DM Mono,monospace",fill:"rgba(80,120,220,0.22)","text-anchor":"middle",transform:`rotate(-90,10,${(PAD+H)/2})`});
+  yt.textContent="POWER"; svg.appendChild(yt);
+  const xt=svgEl("text",{x:(PAD+W)/2,y:H-1,"font-size":"6","font-family":"DM Mono,monospace",fill:"rgba(80,120,220,0.22)","text-anchor":"middle"});
+  xt.textContent="INTEREST"; svg.appendChild(xt);
+
+  STAKEHOLDERS.forEach((s,idx) => {
+    const cx = PAD + s.px*(W-PAD);
+    const cy = PAD + (1-s.py)*(H-PAD);
+    const g = document.createElementNS(NS,"g");
+    g.style.cursor="pointer";
+    g.appendChild(svgEl("circle",{cx,cy,r:14,fill:s.pc+"25",stroke:s.pc+"70","stroke-width":"1.2"}));
+    const t=svgEl("text",{x:cx,y:cy,"font-size":"6.5","font-family":"DM Mono,monospace",fill:s.pc,"text-anchor":"middle","dominant-baseline":"middle","font-weight":"500"});
+    t.textContent="S"+(idx+1); g.appendChild(t);
+    g.addEventListener("click", e => {
+      e.stopPropagation();
+      document.querySelectorAll("#shList .card").forEach(c=>c.classList.remove("active"));
+      const card=document.querySelector(`#shList .card[data-id="${s.id}"]`);
+      if(card) card.classList.add("active");
+      buildPanel(s.eyebrow, s.name,
+        [{id:"strategy",label:"Strategy"},{id:"tips",label:"Key actions"}],
+        tab => {
+          if(tab==="strategy") return `<p class="dp-desc">${s.desc}</p><p class="dp-rule">${s.rule}</p>`;
+          return listHtml(s.bullets);
+        });
+    });
+    svg.appendChild(g);
+  });
+}
+
+// ── TEAM DYNAMICS VIEW ────────────────────────────────────────────────────
+function renderTeam() {
+  const el = document.getElementById("view-team");
+  el.innerHTML = `
+    <div class="section-heading">Tuckman Team Development Model <span>· tap each stage</span></div>
+    <p class="intro-text">PRINCE2 7 draws on people science. Tuckman describes the natural stages teams move through. Understanding where your team is helps you choose the right leadership response.</p>
+    <div class="flow-wrap"><svg id="tuckSvg" style="max-width:100%;display:block;overflow:visible"></svg></div>
+    <div class="section-heading" style="margin-top:0.8rem">Emotional Intelligence <span>· Goleman five components · tap to explore</span></div>
+    <div class="card-grid" id="eiGrid"></div>`;
+
+  drawFlowDiagram("tuckSvg", TUCKMAN, (s,tab) => {
+    if(tab==="detail") return `<p class="dp-rule">${s.rule}</p>${listHtml(s.bullets)}`;
+    return `<p class="dp-desc" style="font-size:clamp(0.56rem,2.1vw,0.7rem);color:#8a9ab8">${s.pm}</p>`;
+  }, [{id:"detail",label:"What happens"},{id:"action",label:"PM action"}]);
+
+  const grid = document.getElementById("eiGrid");
+  grid.innerHTML = EI.map((e,i) => `
+    <div class="card" data-id="${e.id}" style="animation-delay:${i*0.06}s">
+      <div style="font-size:clamp(0.28rem,1vw,0.38rem);letter-spacing:0.1em;text-transform:uppercase;color:${e.dc};margin-bottom:2px">${e.domain}</div>
+      <div class="card-title">${e.name}</div>
+      <div class="card-desc">${e.desc.substring(0,80)}…</div>
+    </div>`).join("");
+
+  grid.querySelectorAll(".card").forEach(card => {
+    card.addEventListener("click", e => {
+      e.stopPropagation();
+      grid.querySelectorAll(".card").forEach(c => c.classList.remove("active"));
+      card.classList.add("active");
+      const item = EI.find(x => x.id===card.dataset.id);
+      buildPanel(item.eyebrow, item.name, [{id:"detail",label:"Detail"}],
+        () => `<p class="dp-rule">${item.rule}</p>${listHtml(item.bullets)}`);
+    });
+  });
+}
+
+// ── CHANGE MANAGEMENT VIEW ────────────────────────────────────────────────
+function renderChange() {
+  const el = document.getElementById("view-change");
+  el.innerHTML = `
+    <div class="section-heading">Organisational Change Journey <span>· tap each stage</span></div>
+    <p class="intro-text">PRINCE2 7 introduces change management as a formal project responsibility. The five stages below describe the journey from first awareness to sustained new ways of working.</p>
+    <div class="flow-wrap"><svg id="changeSvg" style="max-width:100%;display:block;overflow:visible"></svg></div>
+    <div class="section-heading" style="margin-top:0.8rem">Types of resistance <span>· and how to respond · tap to explore</span></div>
+    <div class="card-grid" id="resGrid"></div>`;
+
+  drawFlowDiagram("changeSvg", CHANGE_STAGES, (s,tab) => {
+    if(tab==="detail") return `<p class="dp-rule">${s.rule}</p><p class="dp-desc" style="margin-top:0.3rem">${s.desc}</p>`;
+    return listHtml(s.bullets);
+  }, [{id:"detail",label:"What happens"},{id:"tips",label:"Key actions"}]);
+
+  const grid = document.getElementById("resGrid");
+  grid.innerHTML = RESISTANCE.map((r,i) => `
+    <div class="card" data-id="${r.id}" style="animation-delay:${i*0.06}s">
+      <div style="font-size:clamp(0.28rem,1vw,0.38rem);letter-spacing:0.1em;text-transform:uppercase;color:rgba(232,121,249,0.5);margin-bottom:2px">${r.type}</div>
+      <div class="card-title" style="color:var(--text-bright)">${r.name}</div>
+      <div class="card-desc">${r.desc.substring(0,80)}…</div>
+    </div>`).join("");
+
+  grid.querySelectorAll(".card").forEach(card => {
+    card.addEventListener("click", e => {
+      e.stopPropagation();
+      grid.querySelectorAll(".card").forEach(c => c.classList.remove("active"));
+      card.classList.add("active");
+      const r = RESISTANCE.find(x => x.id===card.dataset.id);
+      buildPanel(r.eyebrow, r.name,
+        [{id:"what",label:"What it is"},{id:"how",label:"How to respond"}],
+        tab => {
+          if(tab==="what") return `<p class="dp-desc">${r.desc}</p>`;
+          return `<p class="dp-rule">${r.rule}</p>${listHtml(r.bullets)}`;
+        });
+    });
+  });
+}
+
+// ── SHARED FLOW DIAGRAM ───────────────────────────────────────────────────
+function drawFlowDiagram(svgId, stages, renderer, tabs) {
+  const svg = document.getElementById(svgId);
+  const NW=100, NH=44, gap=25;
+  const total = stages.length;
+  const W = total*NW + (total-1)*gap + 20;
+  const H = 160;
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  svg.setAttribute("width", W); svg.setAttribute("height", H);
+
+  const defs = document.createElementNS(NS,"defs");
+  stages.forEach((s,i) => {
+    const m = document.createElementNS(NS,"marker");
+    m.setAttribute("id",`arr_${svgId}_${i}`);
+    m.setAttribute("markerWidth","7"); m.setAttribute("markerHeight","7");
+    m.setAttribute("refX","6"); m.setAttribute("refY","3"); m.setAttribute("orient","auto");
+    const p = svgEl("polygon",{points:"0 0,7 3,0 6",fill:s.color+"88"});
+    m.appendChild(p); defs.appendChild(m);
+  });
+  svg.appendChild(defs);
+
+  // Performance curve backdrop
+  const pts = stages.map((_,i) => {
+    const x = 10 + i*(NW+gap) + NW/2;
+    const y = 130 - i * (60/(total-1));
+    return `${x} ${y}`;
+  });
+  svg.appendChild(svgEl("path",{d:"M "+pts.join(" L "),fill:"none",stroke:"rgba(232,121,249,0.1)","stroke-width":"2","stroke-dasharray":"4 3"}));
+
+  stages.forEach((s,i) => {
+    const x = 10 + i*(NW+gap);
+    const y = 55;
+
+    // Arrow to next
+    if(i < stages.length-1) {
+      const x1=x+NW+1, y1=y+NH/2, x2=x+NW+gap-1, y2=y+NH/2;
+      svg.appendChild(svgEl("line",{x1,y1,x2,y2,stroke:s.color+"55","stroke-width":"1.4","marker-end":`url(#arr_${svgId}_${i})`}));
+    }
+
+    const g = document.createElementNS(NS,"g");
+    g.style.cursor="pointer"; g.style.opacity="0";
+    g.style.animation=`fadeUp 0.35s ease ${i*0.08}s forwards`;
+
+    g.appendChild(svgEl("rect",{x,y,width:NW,height:NH,rx:"5",ry:"5",fill:s.color+"1e",stroke:s.color+"66","stroke-width":"1"}));
+
+    const t1=document.createElementNS(NS,"text");
+    t1.setAttribute("x",x+NW/2); t1.setAttribute("y",y+NH/2-6);
+    t1.setAttribute("font-size","9"); t1.setAttribute("font-family","DM Mono,monospace");
+    t1.setAttribute("text-anchor","middle"); t1.setAttribute("dominant-baseline","middle");
+    t1.setAttribute("fill",s.color); t1.setAttribute("font-weight","500");
+    t1.textContent=s.label; g.appendChild(t1);
+
+    const t2=document.createElementNS(NS,"text");
+    t2.setAttribute("x",x+NW/2); t2.setAttribute("y",y+NH/2+8);
+    t2.setAttribute("font-size","6"); t2.setAttribute("font-family","DM Mono,monospace");
+    t2.setAttribute("text-anchor","middle"); t2.setAttribute("dominant-baseline","middle");
+    t2.setAttribute("fill","rgba(255,255,255,0.22)");
+    t2.textContent=`Stage ${i+1}`; g.appendChild(t2);
+
+    g.addEventListener("click", e => {
+      e.stopPropagation();
+      buildPanel(s.eyebrow, s.label, tabs, tab => renderer(s, tab));
+    });
+    svg.appendChild(g);
+  });
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+renderLeadership();
+renderStakeholders();
+renderTeam();
+renderChange();
+</script>
+</body>
+</html>

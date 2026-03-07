@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PRINCE2 · Organisation · Structure</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
+
+  :root {
+    --bg: #090c12;
+    --grid-line: rgba(80,110,180,0.035);
+    --org-color: #818cf8;
+    --border-subtle: rgba(80,120,220,0.10);
+    --border-mid: rgba(80,120,220,0.18);
+    --text-dim: #2e3a52;
+    --text-mid: #4a5878;
+    --text-bright: #b0bcd0;
+    --panel-bg: #0d1120;
+
+    /* Layer colours */
+    --c-corporate:  #818cf8;
+    --c-board:      #38bdf8;
+    --c-pm:         #f472b6;
+    --c-team:       #34d399;
+    --c-ops:        #fb923c;
+    --c-connect:    rgba(255,255,255,0.06);
+  }
+
+  *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: var(--bg);
+    font-family: 'DM Mono', monospace;
+    color: var(--text-bright);
+    display: flex;
+    flex-direction: column;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── HEADER ── */
+  header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: calc(env(safe-area-inset-top,0px) + 10px) 3rem 6px;
+    position: relative;
+    z-index: 2;
+  }
+  .back-link {
+    position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: clamp(0.36rem,1.4vw,0.48rem);
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-dim); text-decoration: none;
+    transition: color 0.2s; white-space: nowrap;
+  }
+  .back-link:hover { color: var(--org-color); }
+  .back-link::before { content: '←'; font-size: 0.7rem; }
+  .header-eyebrow {
+    font-size: clamp(0.38rem,1.4vw,0.46rem);
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 3px;
+  }
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(0.72rem,3vw,1rem);
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  header h1 span { color: var(--org-color); opacity: 0.7; }
+  .header-sub {
+    font-size: clamp(0.36rem,1.4vw,0.46rem);
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: #1e2636; margin-top: 3px;
+  }
+
+  /* ── LEGEND ── */
+  .legend-bar {
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    flex-wrap: wrap; gap: 2px 14px;
+    padding: 4px 1rem;
+    border-bottom: 1px solid var(--border-subtle);
+    position: relative; z-index: 2;
+  }
+  .leg {
+    display: flex; align-items: center; gap: 5px;
+    font-size: clamp(0.34rem,1.3vw,0.44rem);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-mid);
+  }
+  .leg-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .leg-dash {
+    width: 18px; height: 1px;
+    border-top: 1px dashed rgba(255,255,255,0.15);
+    flex-shrink: 0;
+  }
+  .leg-dash-ops {
+    width: 18px; height: 1px;
+    border-top: 1px dashed rgba(251,146,60,0.4);
+    flex-shrink: 0;
+  }
+
+  /* ── TOGGLE TABS ── */
+  .view-tabs {
+    flex-shrink: 0;
+    display: flex; justify-content: center; gap: 4px;
+    padding: 5px 1rem 4px;
+    border-bottom: 1px solid var(--border-subtle);
+    position: relative; z-index: 2;
+  }
+  .view-tab {
+    background: none; border: 1px solid var(--border-subtle);
+    border-radius: 3px; cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(0.34rem,1.3vw,0.46rem);
+    letter-spacing: 0.10em; text-transform: uppercase;
+    color: var(--text-mid); padding: 0.22rem 0.7rem;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+  }
+  .view-tab.active {
+    color: var(--org-color);
+    border-color: rgba(129,140,248,0.4);
+    background: rgba(129,140,248,0.06);
+  }
+
+  /* ── MAIN CANVAS ── */
+  .chart-wrap {
+    flex: 1; position: relative; overflow: auto; min-height: 0;
+    scrollbar-width: thin; scrollbar-color: #1e2838 transparent;
+  }
+  .chart-wrap::-webkit-scrollbar { width: 4px; height: 4px; }
+  .chart-wrap::-webkit-scrollbar-thumb { background: #1e2838; border-radius: 2px; }
+
+  svg.org-svg {
+    display: block;
+    position: relative; z-index: 1;
+  }
+
+  /* SVG node styles */
+  .node-rect {
+    rx: 5; ry: 5;
+    stroke-width: 1;
+    cursor: pointer;
+    transition: filter 0.2s;
+  }
+  .node-rect:hover { filter: brightness(1.25); }
+
+  .node-label-title {
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    pointer-events: none;
+  }
+  .node-label-sub {
+    font-family: 'DM Mono', monospace;
+    font-weight: 300;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    pointer-events: none;
+    fill: rgba(255,255,255,0.38);
+  }
+  .layer-label {
+    font-family: 'DM Mono', monospace;
+    dominant-baseline: middle;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    fill: rgba(255,255,255,0.10);
+  }
+  .edge { fill: none; stroke-width: 1; }
+  .edge-path { fill: none; transition: stroke 0.22s ease, stroke-width 0.22s ease, opacity 0.22s ease; }
+  .edge-project { stroke: rgba(180,200,255,0.18); stroke-dasharray: none; }
+  .edge-ops     { stroke: rgba(251,146,60,0.25); stroke-dasharray: 4 4; }
+  .edge-bridge  { stroke: rgba(255,255,255,0.10); stroke-dasharray: 3 5; }
+
+  /* Animate nodes in */
+  .node-g {
+    opacity: 0;
+    animation: fadeNode 0.45s ease forwards;
+  }
+  @keyframes fadeNode { to { opacity: 1; } }
+
+  /* ── DETAIL PANEL ── */
+  .detail-panel {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--panel-bg);
+    border-top: 1px solid var(--border-mid);
+    transform: translateY(100%);
+    transition: transform 0.32s cubic-bezier(0.32,0.72,0,1);
+    z-index: 100; max-height: 50vh;
+    display: flex; flex-direction: column;
+  }
+  .detail-panel.visible { transform: translateY(0); }
+  .dp-head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 0.7rem 1.1rem 0; flex-shrink: 0;
+  }
+  .dp-layer {
+    font-size: clamp(0.34rem,1.3vw,0.44rem);
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--text-mid); margin-bottom: 3px;
+  }
+  .dp-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(0.82rem,3.5vw,1.05rem);
+  }
+  .dp-badge {
+    display: inline-block;
+    font-size: clamp(0.34rem,1.3vw,0.44rem);
+    letter-spacing: 0.09em; text-transform: uppercase;
+    padding: 0.12rem 0.45rem; border-radius: 999px;
+    border: 1px solid currentColor; opacity: 0.6;
+    margin-top: 4px;
+  }
+  .dp-close {
+    background: none; border: none; color: #3a4a68;
+    font-size: 1.1rem; cursor: pointer;
+    padding: 0 0 0 0.8rem; flex-shrink: 0; align-self: flex-start;
+  }
+  .dp-body {
+    flex: 1; overflow-y: auto;
+    padding: 0.6rem 1.1rem;
+    padding-bottom: calc(env(safe-area-inset-bottom,0px) + 0.6rem);
+    scrollbar-width: thin; scrollbar-color: #1e2838 transparent;
+  }
+  .dp-desc {
+    font-size: clamp(0.5rem,1.9vw,0.62rem);
+    color: #5a6a88; line-height: 1.75; letter-spacing: 0.02em;
+    margin-bottom: 0.6rem;
+  }
+  .dp-section {
+    font-size: clamp(0.36rem,1.4vw,0.48rem);
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: #3a4a68; margin-bottom: 0.35rem; margin-top: 0.55rem;
+  }
+  .dp-bullets { list-style: none; }
+  .dp-bullets li {
+    display: flex; gap: 0.5rem; align-items: flex-start;
+    font-size: clamp(0.48rem,1.8vw,0.6rem);
+    color: #5a6a88; line-height: 1.65; letter-spacing: 0.02em;
+    margin-bottom: 0.3rem;
+  }
+  .dp-bullets li::before {
+    content: '▸'; opacity: 0.55; flex-shrink: 0;
+    margin-top: 1px; font-size: 0.5rem;
+  }
+  .dp-note {
+    font-size: clamp(0.43rem,1.6vw,0.52rem);
+    color: #4a3a4a; margin-top: 0.45rem;
+    font-style: italic; letter-spacing: 0.03em;
+    border-top: 1px solid rgba(80,120,220,0.08);
+    padding-top: 0.45rem;
+  }
+  .dp-ops-tag {
+    display: inline-block; margin-top: 0.4rem;
+    font-size: clamp(0.36rem,1.3vw,0.46rem);
+    letter-spacing: 0.09em; text-transform: uppercase;
+    padding: 0.12rem 0.45rem; border-radius: 999px;
+    border: 1px solid rgba(251,146,60,0.4);
+    color: rgba(251,146,60,0.7);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="back-link" href="index.html">Theme Map</a>
+  <div>
+    <div class="header-eyebrow">PRINCE2 · Organisation Theme</div>
+    <h1>Project <span>Structure</span></h1>
+    <div class="header-sub">project governance · operational layer · tap any role</div>
+  </div>
+</header>
+
+<div class="legend-bar">
+  <div class="leg"><div class="leg-dot" style="background:#818cf8;opacity:0.7"></div>Corporate / Programme</div>
+  <div class="leg"><div class="leg-dot" style="background:#38bdf8;opacity:0.7"></div>Project Board</div>
+  <div class="leg"><div class="leg-dot" style="background:#f472b6;opacity:0.7"></div>Project Mgmt</div>
+  <div class="leg"><div class="leg-dot" style="background:#34d399;opacity:0.7"></div>Delivery Teams</div>
+  <div class="leg"><div class="leg-dot" style="background:#fb923c;opacity:0.7"></div>Operations</div>
+  <div class="leg"><div class="leg-dash"></div>Authority</div>
+  <div class="leg"><div class="leg-dash-ops"></div>Ops bridge</div>
+</div>
+
+<div class="view-tabs" id="viewTabs">
+  <button class="view-tab active" data-view="project">Project Structure</button>
+  <button class="view-tab" data-view="ops">With Operations</button>
+</div>
+
+<div class="chart-wrap" id="chartWrap">
+  <svg class="org-svg" id="orgSvg"></svg>
+</div>
+
+<div class="detail-panel" id="detailPanel">
+  <div class="dp-head">
+    <div>
+      <div class="dp-layer" id="dpLayer"></div>
+      <div class="dp-title" id="dpTitle"></div>
+      <div id="dpBadge"></div>
+    </div>
+    <button class="dp-close" id="dpClose">✕</button>
+  </div>
+  <div class="dp-body">
+    <p class="dp-desc" id="dpDesc"></p>
+    <div id="dpOpsTag"></div>
+    <div class="dp-section" id="dpSection1Label"></div>
+    <ul class="dp-bullets" id="dpBullets1"></ul>
+    <div class="dp-section" id="dpSection2Label"></div>
+    <ul class="dp-bullets" id="dpBullets2"></ul>
+    <p class="dp-note" id="dpNote"></p>
+  </div>
+</div>
+
+<script>
+// ── NODE DATA ─────────────────────────────────────────────────────────────────
+const NODES = {
+  corporate: {
+    id:'corporate', label:'Corporate / Programme', sub:'Directing Layer',
+    layer:'Corporate / Programme', color:'#818cf8',
+    desc:'Sits above the project. Sets the organisational strategy, authorises the project mandate, and appoints the Executive. Receives the End Project Report at closure and is accountable for the Benefits Management Approach after the project closes.',
+    badge:'Directing', badgeColor:'#818cf8',
+    bullets1label:'Responsibilities',
+    bullets1:['Issues the project mandate to trigger the project','Appoints the Executive and sets project-level tolerances','Receives escalations that exceed Project Board tolerances','Owns the programme or portfolio context this project sits within','Accepts the End Project Report and Lessons Report at closure'],
+    bullets2label:'Relationship to operations',
+    bullets2:['May be the same senior leaders who run operational divisions','Strategic decisions made here cascade into both project and BAU','Post-project benefits accountability transfers back to this layer'],
+    note:'In a pure project environment, this layer is the client organisation. In a programme, it may be the Programme Board or Sponsoring Group.',
+    opsRole: true,
+    opsNote:'Corporate leaders often simultaneously hold operational line-management responsibilities. The same Director who chairs a Programme Board may also run a business division.',
+  },
+  executive: {
+    id:'executive', label:'Executive', sub:'Project Owner',
+    layer:'Project Board', color:'#38bdf8',
+    desc:'The single point of accountability for the project. Owns the Business Case from initiation to post-project benefits review. Chairs the Project Board and is the final decision-maker. This accountability cannot be delegated — there is always exactly one Executive per project.',
+    badge:'Single accountability', badgeColor:'#38bdf8',
+    bullets1label:'Responsibilities',
+    bullets1:['Owns and champions the Business Case at all times','Secures project funding from the business','Appoints the Project Manager and other Board members','Chairs the Project Board and makes all final decisions','Approves Stage Plans, Exception Plans, and major changes','Authorises project closure and accepts the End Project Report','Remains accountable for benefits realisation post-closure'],
+    bullets2label:'Cannot be combined with',
+    bullets2:['Project Manager (destroys management-by-exception)','Team Manager (conflict of delivery and governance)','Project Support (concentration of control)','Project Assurance (cannot self-certify)'],
+    note:'In non-PRINCE2 organisations this role is often called Project Sponsor. There can only ever be one Executive per project.',
+    opsRole: true,
+    opsNote:'The Executive is typically a senior operational manager — a Director or Head of Department — who continues to run their division throughout the project.',
+  },
+  seniorUser: {
+    id:'seniorUser', label:'Senior User', sub:'User & Benefits',
+    layer:'Project Board', color:'#6ee7b7',
+    desc:'Represents the interests of those who will use the products, receive the benefits, or be operationally affected by the outcomes. Accountable for ensuring the project delivers what users actually need, and for benefits realisation after the project closes.',
+    badge:'User advocate', badgeColor:'#6ee7b7',
+    bullets1label:'Responsibilities',
+    bullets1:['Specifies user requirements and defines acceptance criteria','Provides user resources for quality reviews and testing','Signs off products on behalf of the user community','Monitors that solutions will work in live operations','Accountable for benefits realisation after project closes','Can be multiple people representing different user groups'],
+    bullets2label:'Operational connection',
+    bullets2:['Usually a senior manager from the business operations team','Post-project, owns the Benefits Management Approach from Corporate','Schedules and conducts benefits reviews months after closure','Represents the future operational state of the organisation'],
+    note:'Post-project, the Senior User takes over from the Executive as the primary benefits accountable owner.',
+    opsRole: true,
+    opsNote:'The Senior User is almost always an operational line manager. They straddle the project (on the Board) and their day job (running business operations) simultaneously.',
+  },
+  seniorSupplier: {
+    id:'seniorSupplier', label:'Senior Supplier', sub:'Technical Authority',
+    layer:'Project Board', color:'#fb923c',
+    desc:'Represents the interests of those designing, building, and delivering the project\'s products — whether internal teams or external contractors. Accountable for technical integrity and the availability of supplier resources at the right time.',
+    badge:'Supply-side authority', badgeColor:'#fb923c',
+    bullets1label:'Responsibilities',
+    bullets1:['Confirms technical feasibility of all requirements and plans','Commits supplier resources to the project at the right time','Ensures products meet agreed technical quality standards','Manages supplier-side risks and issues at Board level','Provides technical advice to the Executive','Can represent multiple supplier organisations'],
+    bullets2label:'Operational connection',
+    bullets2:['May be from an internal IT or engineering department','May be an external contractor or systems integrator','After delivery, hands products over to the operational support team','The receiving operational team may be a different part of the same organisation'],
+    note:'The Senior Supplier and Senior User roles must never be combined — their interests can conflict at acceptance.',
+    opsRole: true,
+    opsNote:'Internal Senior Suppliers often have a dual role: they are responsible for building the product within the project, and will also support or maintain it in operations after handover.',
+  },
+  projectAssurance: {
+    id:'projectAssurance', label:'Project Assurance', sub:'Independent oversight',
+    layer:'Project Board', color:'#818cf8',
+    desc:'Provides the Project Board with independent confirmation that the project is being managed correctly. Must be independent of the Project Manager. Checks that quality, risk, business case, and stakeholder interests are being properly handled.',
+    badge:'Board assurance', badgeColor:'#818cf8',
+    bullets1label:'Responsibilities',
+    bullets1:['Independently monitors compliance with the project\'s approaches','Assures the Project Board that risks are being managed correctly','Verifies that quality reviews are planned and completed','Confirms stakeholder interests are being addressed','Reports directly to the Project Board — not through the PM'],
+    bullets2label:'Important constraints',
+    bullets2:['Cannot be performed by the Project Manager (self-certification)','Can be performed by Board members themselves, or delegated','Should be separate from Project Support','May be a dedicated audit function in large organisations'],
+    note:'Project Assurance is a Board-level role. In small projects it is often performed by Board members directly rather than delegated.',
+    opsRole: false,
+  },
+  changeAuthority: {
+    id:'changeAuthority', label:'Change Authority', sub:'Delegated change control',
+    layer:'Project Board', color:'#818cf8',
+    desc:'An optional role delegated by the Project Board to decide on minor change requests without the full Board convening. Operates within defined financial and scope tolerances. When those tolerances are threatened, changes must escalate back to the full Board.',
+    badge:'Delegated authority', badgeColor:'#818cf8',
+    bullets1label:'Responsibilities',
+    bullets1:['Assesses and approves or rejects RFCs within agreed tolerances','Maintains the Issue Register entries for all change decisions','Escalates out-of-tolerance changes to the full Project Board','Tracks the change budget consumption and reports to the PM'],
+    bullets2label:'Constraints',
+    bullets2:['Can be the PM, a committee, or a single delegated individual','Tolerances must be explicitly agreed by the Project Board','Has no authority to approve changes beyond its defined limits'],
+    note:'The Change Authority role is optional. In small projects the Project Board may retain all change authority directly.',
+    opsRole: false,
+  },
+  projectManager: {
+    id:'projectManager', label:'Project Manager', sub:'Day-to-day delivery',
+    layer:'Project Management', color:'#f472b6',
+    desc:'Delegated authority from the Project Board to run the project day-to-day within agreed tolerances. The single point of contact between the Board and the delivery teams. Accountable for outputs — not for benefits (that is the Senior User\'s responsibility).',
+    badge:'Day-to-day authority', badgeColor:'#f472b6',
+    bullets1label:'Responsibilities',
+    bullets1:['Plans and maintains Stage Plans','Authorises Work Packages to Team Managers','Monitors all six tolerances and raises Exception Reports when needed','Produces Checkpoint, Highlight, End Stage, and End Project Reports','Manages all project registers (Risk, Issue, Quality, Lessons)','Is NOT accountable for benefits — only for outputs'],
+    bullets2label:'Cannot be combined with',
+    bullets2:['Executive (destroys governance separation)','Project Assurance (cannot assure own work)'],
+    note:'The PM may take on Team Manager responsibilities directly if there are no Team Managers, but this must be explicitly agreed.',
+    opsRole: false,
+  },
+  projectSupport: {
+    id:'projectSupport', label:'Project Support', sub:'Admin & tools',
+    layer:'Project Management', color:'#f472b6',
+    desc:'Provides administrative, tool, and configuration management support to the Project Manager. Maintains registers, manages document control, and keeps configuration item records up to date. A supporting — not governing — role.',
+    badge:'Support function', badgeColor:'#f472b6',
+    bullets1label:'Responsibilities',
+    bullets1:['Maintains project registers and logs','Manages document version control and configuration records','Supports the PM with scheduling and reporting administration','May provide specialist expertise (planning tools, risk software)'],
+    bullets2label:'Constraints',
+    bullets2:['Must not perform Project Assurance (conflict of interest)','Reports to the Project Manager, not the Project Board'],
+    note:'In small projects this role is often absorbed by the Project Manager directly. In large projects it may be a dedicated Project Management Office (PMO).',
+    opsRole: false,
+  },
+  teamManager1: {
+    id:'teamManager1', label:'Team Manager A', sub:'Discovery & Design',
+    layer:'Delivery Teams', color:'#34d399',
+    desc:'Manages a specialist team delivering a defined set of Work Packages. Receives Work Packages from the Project Manager, produces Team Plans, and reports progress via Checkpoint Reports. Accountable for the technical quality of team deliverables.',
+    badge:'Work Package delivery', badgeColor:'#34d399',
+    bullets1label:'Responsibilities',
+    bullets1:['Accepts and negotiates Work Packages with the Project Manager','Produces Team Plans for complex or high-risk Work Packages','Manages day-to-day team activity within the Work Package','Submits Checkpoint Reports to the Project Manager at agreed frequency','Raises issues and risks through the PM to the Issue/Risk Register','Ensures products meet their Product Descriptions before sign-off'],
+    bullets2label:'Operational connection',
+    bullets2:['Team members are typically borrowed from operational departments','Line management responsibility stays with the operational manager','After project delivery, team members return to their BAU roles'],
+    note:'The PM may act as Team Manager if the project is small enough. There can be multiple Team Managers for different specialist areas.',
+    opsRole: true,
+    opsNote:'Team members report to the Team Manager within the project, but their employment contract, line management, and annual review remain with their operational line manager.',
+  },
+  teamManager2: {
+    id:'teamManager2', label:'Team Manager B', sub:'Build & Test',
+    layer:'Delivery Teams', color:'#34d399',
+    desc:'Manages the build and testing Work Packages. Works closely with the Senior Supplier to confirm technical quality standards are met before products are formally accepted. Raises quality issues through the Project Manager.',
+    badge:'Work Package delivery', badgeColor:'#34d399',
+    bullets1label:'Responsibilities',
+    bullets1:['Manages development and testing team activities','Coordinates with Team Manager A on integration dependencies','Ensures all products pass quality review before submission','Tracks defects in the Issue Register via the PM','Submits Checkpoint Reports at agreed frequency'],
+    bullets2label:'Operational connection',
+    bullets2:['Technical team members drawn from IT or engineering department','Operational support staff may be seconded to assist with testing','After handover, some team members may join the operational support team'],
+    note:'Multiple Team Managers may co-exist in parallel for different workstreams. They coordinate through the PM, not directly with the Board.',
+    opsRole: true,
+    opsNote:'The Build team often includes staff who will later support the product in operations. Their involvement in the project is both a delivery contribution and a knowledge transfer.',
+  },
+  opsLineManager: {
+    id:'opsLineManager', label:'Ops Line Manager', sub:'Business as Usual',
+    layer:'Operations (BAU)', color:'#fb923c',
+    desc:'The operational manager who retains line management responsibility for staff seconded to the project. Not a formal PRINCE2 role, but critically important. Negotiates resource availability with the Project Manager and plans for the operational transition when products are handed over.',
+    badge:'BAU authority', badgeColor:'#fb923c',
+    bullets1label:'Operational responsibilities',
+    bullets1:['Retains HR and line management accountability for seconded staff','Negotiates availability windows with the Project Manager','Plans for operational disruption during peak project demand','Prepares the business unit to receive and operate new products','Participates in benefits reviews post-handover'],
+    bullets2label:'Connection to project',
+    bullets2:['May simultaneously hold a Senior User or Senior Supplier role on the Board','Keeps operational teams informed of incoming changes','Coordinates training and readiness planning for go-live'],
+    note:'This role is not defined by PRINCE2 but represents the real-world connection point between the project world and the operational world.',
+    opsRole: true,
+    opsNote:'The Ops Line Manager is where the project meets "normal work." They are the tension point: responsible for keeping BAU running while lending their best people to the project.',
+  },
+  opsSupport: {
+    id:'opsSupport', label:'Ops Support Team', sub:'Post-handover operation',
+    layer:'Operations (BAU)', color:'#fb923c',
+    desc:'The team that will operate, maintain, and support the project\'s products after handover. Not involved in project delivery, but must be prepared for the transition. Their readiness is the responsibility of the Senior User and the handover plan.',
+    badge:'Receiving team', badgeColor:'#fb923c',
+    bullets1label:'Transition responsibilities',
+    bullets1:['Receives products from the project at handover','Confirms readiness to support before go-live','Participates in transition planning and training','Raises follow-on issues through operational change processes','Provides evidence for post-project benefits reviews'],
+    bullets2label:'Connection to project',
+    bullets2:['Senior User is accountable for their readiness','May provide seconded staff to the project\'s test phase','Follow-on Action Recommendations are formally addressed to this team'],
+    note:'The Ops Support Team is the final destination for the project\'s products. Their acceptance of the handover marks the end of project accountability.',
+    opsRole: true,
+    opsNote:'Operational teams often feel the project\'s impacts most acutely — they inherit the products, carry the risk of poor quality, and conduct the benefits reviews that determine whether the whole investment was worthwhile.',
+  },
+};
+
+// ── LAYOUT CONFIG ─────────────────────────────────────────────────────────────
+// We draw two views:
+// 1. "project"  — pure PRINCE2 hierarchy (Corporate → Board → PM → Teams)
+// 2. "ops"      — same hierarchy + operational layer + bridge connections
+
+const NODE_W = 130;
+const NODE_H = 44;
+const GAP_X  = 22;
+const GAP_Y  = 52;
+const PAD    = 28;
+
+// Positions are defined as {col, row} in a grid; we'll compute px coords
+function layoutProject() {
+  return {
+    nodes: [
+      { id:'corporate',       col:2,   row:0 },
+      { id:'executive',       col:1.2, row:1 },
+      { id:'changeAuthority', col:2.4, row:1 },
+      { id:'seniorUser',      col:3.6, row:1 },
+      { id:'seniorSupplier',  col:4.8, row:1 },
+      { id:'projectAssurance',col:0,   row:1 },
+      { id:'projectManager',  col:2,   row:2 },
+      { id:'projectSupport',  col:3.5, row:2 },
+      { id:'teamManager1',    col:1.2, row:3 },
+      { id:'teamManager2',    col:2.8, row:3 },
+    ],
+    edges: [
+      { from:'corporate',       to:'executive',        type:'project' },
+      { from:'corporate',       to:'seniorUser',       type:'project' },
+      { from:'corporate',       to:'seniorSupplier',   type:'project' },
+      { from:'executive', to:'projectAssurance', type:'project', label:'delegates', fromSide:'left',  toSide:'right' },
+      { from:'executive', to:'changeAuthority',  type:'project', label:'delegates', fromSide:'right', toSide:'left'  },
+      { from:'executive',       to:'projectManager',   type:'project' },
+      { from:'seniorUser',      to:'projectManager',   type:'project' },
+      { from:'seniorSupplier',  to:'projectManager',   type:'project' },
+      { from:'projectManager',  to:'projectSupport',   type:'project' },
+      { from:'projectManager',  to:'teamManager1',     type:'project' },
+      { from:'projectManager',  to:'teamManager2',     type:'project' },
+    ],
+  };
+}
+
+function layoutOps() {
+  return {
+    nodes: [
+      { id:'corporate',       col:2,   row:0 },
+      { id:'executive',       col:1.2, row:1 },
+      { id:'changeAuthority', col:2.4, row:1 },
+      { id:'seniorUser',      col:3.6, row:1 },
+      { id:'seniorSupplier',  col:4.8, row:1 },
+      { id:'projectAssurance',col:0,   row:1 },
+      { id:'projectManager',  col:2,   row:2 },
+      { id:'projectSupport',  col:3.5, row:2 },
+      { id:'teamManager1',    col:1.2, row:3 },
+      { id:'teamManager2',    col:2.8, row:3 },
+      // Ops layer
+      { id:'opsLineManager',  col:0,   row:3 },
+      { id:'opsSupport',      col:4.2, row:3 },
+    ],
+    edges: [
+      { from:'corporate',       to:'executive',        type:'project' },
+      { from:'corporate',       to:'seniorUser',       type:'project' },
+      { from:'corporate',       to:'seniorSupplier',   type:'project' },
+      { from:'executive', to:'projectAssurance', type:'project', label:'delegates', fromSide:'left',  toSide:'right' },
+      { from:'executive', to:'changeAuthority',  type:'project', label:'delegates', fromSide:'right', toSide:'left'  },
+      { from:'executive',       to:'projectManager',   type:'project' },
+      { from:'seniorUser',      to:'projectManager',   type:'project' },
+      { from:'seniorSupplier',  to:'projectManager',   type:'project' },
+      { from:'projectManager',  to:'projectSupport',   type:'project' },
+      { from:'projectManager',  to:'teamManager1',     type:'project' },
+      { from:'projectManager',  to:'teamManager2',     type:'project' },
+      // Ops bridge edges
+      { from:'opsLineManager', to:'teamManager1',   type:'ops',    label:'resources',   fromSide:'right', toSide:'left'  },
+      { from:'opsLineManager', to:'teamManager2',   type:'ops',    label:'resources',   fromSide:'right', toSide:'left'  },
+      { from:'seniorUser',     to:'opsLineManager', type:'bridge', label:'same person', fromSide:'left',  toSide:'top'   },
+      { from:'seniorSupplier', to:'opsSupport',     type:'bridge', label:'handover',    fromSide:'right', toSide:'top'   },
+      { from:'corporate',      to:'opsLineManager', type:'bridge', label:'line mgmt',   fromSide:'left',  toSide:'top'   },
+      { from:'teamManager2',   to:'opsSupport',     type:'ops',    label:'transition',  fromSide:'right', toSide:'left'  },
+    ],
+  };
+}
+
+// ── RENDER SVG ────────────────────────────────────────────────────────────────
+let currentView = 'project';
+const svg = document.getElementById('orgSvg');
+const chartWrap = document.getElementById('chartWrap');
+
+function colRowToPx(col, row, cols) {
+  const x = PAD + col * (NODE_W + GAP_X);
+  const y = PAD + row * (NODE_H + GAP_Y) + 30; // +30 for layer labels
+  return { x, y };
+}
+
+function svgPoint(col, row) {
+  return {
+    x: PAD + col * (NODE_W + GAP_X) + NODE_W / 2,
+    y: PAD + row * (NODE_H + GAP_Y) + NODE_H / 2 + 30,
+  };
+}
+
+function renderChart(viewName) {
+  const layout = viewName === 'ops' ? layoutOps() : layoutProject();
+  svg.innerHTML = '';
+
+  // Compute canvas size
+  const maxCol = Math.max(...layout.nodes.map(n => n.col));
+  const maxRow = Math.max(...layout.nodes.map(n => n.row));
+  const svgW = Math.max(chartWrap.clientWidth, PAD * 2 + (maxCol + 1) * (NODE_W + GAP_X));
+  const svgH = PAD * 2 + (maxRow + 1) * (NODE_H + GAP_Y) + 30 + 24;
+
+  svg.setAttribute('width', svgW);
+  svg.setAttribute('height', svgH);
+  svg.style.minWidth = svgW + 'px';
+
+  // Layer background bands
+  const layers = [
+    { row:0, label:'Corporate / Programme', color:'#818cf8' },
+    { row:1, label:'Project Board',          color:'#38bdf8' },
+    { row:2, label:'Project Management',     color:'#f472b6' },
+    { row:3, label:'Delivery Teams'+(viewName==='ops'?' · Operations':''), color:'#34d399' },
+  ];
+  layers.forEach(l => {
+    const bandY = PAD + l.row * (NODE_H + GAP_Y) + 30 - 10;
+    const bandH = NODE_H + 20;
+    const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('x', 0);
+    rect.setAttribute('y', bandY);
+    rect.setAttribute('width', svgW);
+    rect.setAttribute('height', bandH);
+    rect.setAttribute('fill', l.color + '07');
+    svg.appendChild(rect);
+    // Layer label on left
+    const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+    txt.setAttribute('x', 6);
+    txt.setAttribute('y', bandY + bandH / 2);
+    txt.setAttribute('font-size', '7');
+    txt.setAttribute('letter-spacing', '0.12');
+    txt.classList.add('layer-label');
+    txt.textContent = l.label.toUpperCase();
+    svg.appendChild(txt);
+  });
+
+  // Build position map
+  const posMap = {};
+  layout.nodes.forEach(n => {
+    posMap[n.id] = svgPoint(n.col, n.row);
+  });
+
+  // Edges
+  const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+  // arrowhead markers
+  ['project','ops','bridge'].forEach(type => {
+    const colors = { project:'rgba(180,200,255,0.35)', ops:'rgba(251,146,60,0.4)', bridge:'rgba(255,255,255,0.18)' };
+    const marker = document.createElementNS('http://www.w3.org/2000/svg','marker');
+    marker.setAttribute('id','arrow-'+type);
+    marker.setAttribute('markerWidth','6');
+    marker.setAttribute('markerHeight','6');
+    marker.setAttribute('refX','5');
+    marker.setAttribute('refY','3');
+    marker.setAttribute('orient','auto');
+    const poly = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    poly.setAttribute('points','0 0, 6 3, 0 6');
+    poly.setAttribute('fill', colors[type]);
+    marker.appendChild(poly);
+    defs.appendChild(marker);
+  });
+  svg.appendChild(defs);
+
+  const typeColors   = { project:'rgba(140,170,255,0.18)', ops:'rgba(251,146,60,0.22)', bridge:'rgba(255,255,255,0.10)' };
+  const typeColorsHi = { project:'rgba(140,170,255,0.80)', ops:'rgba(251,146,60,0.90)', bridge:'rgba(255,255,255,0.50)' };
+
+  // ── Smart connector routing ──────────────────────────────────────────────────
+  // Rules:
+  //  - Same row  → exit/enter from sides, arc horizontally
+  //  - Diff row  → exit bottom, enter top, bezier curve
+  //  - fromSide/toSide override on edge → always honoured
+  function getConnectorPoints(e) {
+    const fp = posMap[e.from], tp = posMap[e.to];
+    const fromRow = layout.nodes.find(n=>n.id===e.from)?.row ?? 0;
+    const toRow   = layout.nodes.find(n=>n.id===e.to  )?.row ?? 0;
+    const sameRow = fromRow === toRow;
+
+    let fSide = e.fromSide || (sameRow ? (fp.x < tp.x ? 'right' : 'left') : 'bottom');
+    let tSide = e.toSide   || (sameRow ? (fp.x < tp.x ? 'left'  : 'right') : 'top');
+
+    const anchor = (pos, side) => ({
+      left:   { x: pos.x - NODE_W/2, y: pos.y },
+      right:  { x: pos.x + NODE_W/2, y: pos.y },
+      top:    { x: pos.x,            y: pos.y - NODE_H/2 },
+      bottom: { x: pos.x,            y: pos.y + NODE_H/2 },
+    }[side]);
+
+    const a1 = anchor(fp, fSide);
+    const a2 = anchor(tp, tSide);
+
+    // Control points pull away in exit direction
+    const PULL = sameRow ? 55 : 42;
+    const dir = { left:[-1,0], right:[1,0], top:[0,-1], bottom:[0,1] };
+    const p1 = [a1.x + dir[fSide][0]*PULL, a1.y + dir[fSide][1]*PULL];
+    const p2 = [a2.x + dir[tSide][0]*PULL, a2.y + dir[tSide][1]*PULL];
+
+    const d = `M ${a1.x} ${a1.y} C ${p1[0]} ${p1[1]}, ${p2[0]} ${p2[1]}, ${a2.x} ${a2.y}`;
+    // Approx bezier midpoint (t=0.5)
+    const mx = 0.125*a1.x + 0.375*p1[0] + 0.375*p2[0] + 0.125*a2.x;
+    const my = 0.125*a1.y + 0.375*p1[1] + 0.375*p2[1] + 0.125*a2.y;
+    return { d, mx, my };
+  }
+
+  // ── Draw edges BEFORE nodes so nodes sit on top ──────────────────────────────
+  const edgeGroup = document.createElementNS('http://www.w3.org/2000/svg','g');
+  edgeGroup.setAttribute('id','edgeGroup');
+  svg.appendChild(edgeGroup);
+
+  layout.edges.forEach(e => {
+    if (!posMap[e.from] || !posMap[e.to]) return;
+    const { d, mx, my } = getConnectorPoints(e);
+
+    const svgPath = document.createElementNS('http://www.w3.org/2000/svg','path');
+    svgPath.setAttribute('d', d);
+    svgPath.setAttribute('fill','none');
+    svgPath.setAttribute('stroke', typeColors[e.type]);
+    svgPath.setAttribute('stroke-width', e.type === 'project' ? '1.2' : '1');
+    svgPath.setAttribute('stroke-dasharray', e.type === 'bridge' ? '3 5' : e.type === 'ops' ? '4 4' : 'none');
+    svgPath.setAttribute('marker-end','url(#arrow-'+e.type+')');
+    svgPath.dataset.from = e.from;
+    svgPath.dataset.to   = e.to;
+    svgPath.dataset.type = e.type;
+    svgPath.dataset.colorNormal = typeColors[e.type];
+    svgPath.dataset.colorHi     = typeColorsHi[e.type];
+    svgPath.classList.add('edge-path');
+    edgeGroup.appendChild(svgPath);
+
+    if (e.label) {
+      const normalFill = e.type==='ops' ? 'rgba(251,146,60,0.38)' : e.type==='bridge' ? 'rgba(255,255,255,0.14)' : 'rgba(140,170,255,0.24)';
+      const hiFill     = e.type==='ops' ? 'rgba(251,146,60,0.80)' : e.type==='bridge' ? 'rgba(255,255,255,0.50)' : 'rgba(140,170,255,0.80)';
+      const lt = document.createElementNS('http://www.w3.org/2000/svg','text');
+      lt.setAttribute('x', mx + 4);
+      lt.setAttribute('y', my - 4);
+      lt.setAttribute('font-size','6.5');
+      lt.setAttribute('font-family','DM Mono, monospace');
+      lt.setAttribute('fill', normalFill);
+      lt.setAttribute('letter-spacing','0.07');
+      lt.setAttribute('text-anchor','middle');
+      lt.dataset.from = e.from;
+      lt.dataset.to   = e.to;
+      lt.dataset.labelNormalFill = normalFill;
+      lt.dataset.labelHiFill     = hiFill;
+      lt.classList.add('edge-label');
+      lt.textContent = e.label;
+      edgeGroup.appendChild(lt);
+    }
+  });
+
+  // ── Draw nodes on top ────────────────────────────────────────────────────────
+  layout.nodes.forEach((n, i) => {
+    const pos  = posMap[n.id];
+    const data = NODES[n.id];
+    if (!pos || !data) return;
+
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.classList.add('node-g');
+    g.dataset.nodeId = n.id;
+    g.style.animationDelay = (i * 0.045) + 's';
+    g.style.cursor = 'pointer';
+
+    const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('x', pos.x - NODE_W / 2);
+    rect.setAttribute('y', pos.y - NODE_H / 2);
+    rect.setAttribute('width', NODE_W);
+    rect.setAttribute('height', NODE_H);
+    rect.setAttribute('rx', 5);
+    rect.setAttribute('ry', 5);
+    rect.setAttribute('fill', data.color + '18');
+    rect.setAttribute('stroke', data.color + '55');
+    rect.setAttribute('stroke-width', '1');
+    rect.dataset.normalStroke  = data.color + '55';
+    rect.dataset.normalFill    = data.color + '18';
+    rect.dataset.activeStroke  = data.color + 'cc';
+    rect.dataset.activeFill    = data.color + '30';
+    rect.classList.add('node-rect');
+
+    const title = document.createElementNS('http://www.w3.org/2000/svg','text');
+    title.setAttribute('x', pos.x);
+    title.setAttribute('y', pos.y - 7);
+    title.setAttribute('font-size', '8.5');
+    title.setAttribute('font-weight', '500');
+    title.setAttribute('font-family', 'DM Mono, monospace');
+    title.setAttribute('text-anchor', 'middle');
+    title.setAttribute('fill', data.color);
+    title.setAttribute('letter-spacing', '0.06');
+    title.textContent = data.label;
+
+    const sub = document.createElementNS('http://www.w3.org/2000/svg','text');
+    sub.setAttribute('x', pos.x);
+    sub.setAttribute('y', pos.y + 7);
+    sub.setAttribute('font-size', '7');
+    sub.setAttribute('font-family', 'DM Mono, monospace');
+    sub.setAttribute('text-anchor', 'middle');
+    sub.setAttribute('fill', 'rgba(180,200,255,0.32)');
+    sub.setAttribute('letter-spacing', '0.08');
+    sub.textContent = data.sub;
+
+    g.appendChild(rect);
+    g.appendChild(title);
+    g.appendChild(sub);
+    g.addEventListener('click', ev => {
+      ev.stopPropagation();
+      highlightNode(n.id);
+      showDetail(data);
+    });
+    svg.appendChild(g);
+  });
+}
+
+// ── HIGHLIGHT LOGIC ───────────────────────────────────────────────────────────
+let activeNodeId = null;
+
+function highlightNode(nodeId) {
+  activeNodeId = nodeId;
+
+  // Find which nodes are connected to this one
+  const connected = new Set([nodeId]);
+  document.querySelectorAll('.edge-path').forEach(p => {
+    if (p.dataset.from === nodeId || p.dataset.to === nodeId) {
+      connected.add(p.dataset.from);
+      connected.add(p.dataset.to);
+    }
+  });
+
+  // Dim / highlight edges
+  document.querySelectorAll('.edge-path').forEach(p => {
+    const isActive = p.dataset.from === nodeId || p.dataset.to === nodeId;
+    p.setAttribute('stroke', isActive ? p.dataset.colorHi : 'rgba(255,255,255,0.04)');
+    p.setAttribute('stroke-width', isActive ? (p.dataset.type === 'project' ? '1.8' : '1.4') : '0.6');
+    p.style.transition = 'stroke 0.25s, stroke-width 0.25s';
+  });
+
+  // Dim / highlight edge labels
+  document.querySelectorAll('.edge-label').forEach(lt => {
+    const isActive = lt.dataset.from === nodeId || lt.dataset.to === nodeId;
+    lt.setAttribute('fill', isActive ? lt.dataset.labelHiFill : 'rgba(255,255,255,0.03)');
+  });
+
+  // Dim / highlight nodes
+  document.querySelectorAll('.node-g').forEach(g => {
+    const rect = g.querySelector('.node-rect');
+    if (!rect) return;
+    const isActive = connected.has(g.dataset.nodeId);
+    rect.setAttribute('stroke', isActive ? rect.dataset.activeStroke : rect.dataset.normalStroke.replace(/[\d.]+\)$/, '0.12)'));
+    rect.setAttribute('fill',   isActive ? rect.dataset.activeFill   : rect.dataset.normalFill.replace(/[\d.]+\)$/, '0.05)'));
+    // Dim text in inactive nodes
+    g.querySelectorAll('text').forEach(t => {
+      t.style.opacity = isActive ? '1' : '0.18';
+      t.style.transition = 'opacity 0.25s';
+    });
+  });
+}
+
+function clearHighlight() {
+  activeNodeId = null;
+  document.querySelectorAll('.edge-path').forEach(p => {
+    p.setAttribute('stroke', p.dataset.colorNormal);
+    p.setAttribute('stroke-width', p.dataset.type === 'project' ? '1.2' : '1');
+  });
+  document.querySelectorAll('.edge-label').forEach(lt => {
+    lt.setAttribute('fill', lt.dataset.labelNormalFill);
+  });
+  document.querySelectorAll('.node-g').forEach(g => {
+    const rect = g.querySelector('.node-rect');
+    if (!rect) return;
+    rect.setAttribute('stroke', rect.dataset.normalStroke);
+    rect.setAttribute('fill',   rect.dataset.normalFill);
+    g.querySelectorAll('text').forEach(t => { t.style.opacity = '1'; });
+  });
+}
+
+// ── DETAIL PANEL ──────────────────────────────────────────────────────────────
+function showDetail(data) {
+  document.getElementById('dpLayer').textContent = data.layer;
+  document.getElementById('dpLayer').style.color = data.color;
+
+  const titleEl = document.getElementById('dpTitle');
+  titleEl.textContent = data.label;
+  titleEl.style.color = data.color;
+
+  const badgeEl = document.getElementById('dpBadge');
+  badgeEl.innerHTML = `<span class="dp-badge" style="color:${data.badgeColor};border-color:${data.badgeColor}">${data.badge}</span>`;
+
+  document.getElementById('dpDesc').textContent = data.desc;
+
+  const opsTagEl = document.getElementById('dpOpsTag');
+  if (data.opsRole && currentView === 'ops' && data.opsNote) {
+    opsTagEl.innerHTML = `<span class="dp-ops-tag">⟳ Operational connection</span><p class="dp-desc" style="margin-top:0.4rem;color:#7a6050">${data.opsNote}</p>`;
+  } else {
+    opsTagEl.innerHTML = '';
+  }
+
+  document.getElementById('dpSection1Label').textContent = data.bullets1label || '';
+  document.getElementById('dpBullets1').innerHTML = (data.bullets1 || []).map(b => `<li>${b}</li>`).join('');
+  document.getElementById('dpSection2Label').textContent = data.bullets2label || '';
+  document.getElementById('dpBullets2').innerHTML = (data.bullets2 || []).map(b => `<li>${b}</li>`).join('');
+
+  const noteEl = document.getElementById('dpNote');
+  noteEl.textContent = data.note || '';
+  noteEl.style.display = data.note ? '' : 'none';
+
+  document.getElementById('detailPanel').classList.add('visible');
+}
+
+document.getElementById('dpClose').addEventListener('click', () => {
+  document.getElementById('detailPanel').classList.remove('visible');
+  clearHighlight();
+});
+document.getElementById('chartWrap').addEventListener('click', () => {
+  document.getElementById('detailPanel').classList.remove('visible');
+  clearHighlight();
+});
+
+// View tab switching
+document.getElementById('viewTabs').addEventListener('click', e => {
+  const btn = e.target.closest('.view-tab');
+  if (!btn) return;
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  currentView = btn.dataset.view;
+  renderChart(currentView);
+  document.getElementById('detailPanel').classList.remove('visible');
+  clearHighlight();
+});
+
+// Initial render
+renderChart('project');
+window.addEventListener('resize', () => renderChart(currentView));
+</script>
+</body>
+</html>

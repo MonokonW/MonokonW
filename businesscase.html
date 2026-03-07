@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PRINCE2 · Business Case</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Playfair+Display:ital,wght@0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap');
+
+:root {
+  --bg:          #090c12;
+  --grid-line:   rgba(80,110,180,0.035);
+  --amber:       #f59e0b;
+  --amber-dim:   rgba(245,158,11,0.12);
+  --amber-glow:  rgba(245,158,11,0.06);
+  --border-sub:  rgba(80,120,220,0.10);
+  --border-mid:  rgba(80,120,220,0.18);
+  --text-dim:    #2e3a52;
+  --text-mid:    #4a5878;
+  --text-body:   #6a7a98;
+  --text-bright: #b0bcd0;
+  --panel-bg:    #0d1120;
+  --doc-bg:      #0b0f1a;
+  --doc-border:  rgba(245,158,11,0.12);
+}
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html,body { width:100%; height:100%; overflow:hidden; }
+body {
+  background: var(--bg);
+  font-family: 'DM Mono', monospace;
+  color: var(--text-bright);
+  display: flex;
+  flex-direction: column;
+}
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background-image:
+    linear-gradient(var(--grid-line) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);
+  background-size:28px 28px;
+  pointer-events:none; z-index:0;
+}
+
+/* ── HEADER ── */
+header {
+  flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  text-align:center;
+  padding: calc(env(safe-area-inset-top,0px) + 10px) 3rem 6px;
+  position:relative; z-index:2;
+}
+.back-link {
+  position:absolute; left:1rem; top:50%; transform:translateY(-50%);
+  display:inline-flex; align-items:center; gap:5px;
+  font-size:clamp(0.36rem,1.4vw,0.48rem);
+  letter-spacing:0.12em; text-transform:uppercase;
+  color:var(--text-dim); text-decoration:none;
+  transition:color 0.2s; white-space:nowrap;
+}
+.back-link:hover { color:var(--amber); }
+.back-link::before { content:'←'; font-size:0.7rem; }
+.header-eyebrow {
+  font-size:clamp(0.38rem,1.4vw,0.46rem);
+  letter-spacing:0.22em; text-transform:uppercase;
+  color:var(--text-dim); margin-bottom:3px;
+}
+header h1 {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(0.72rem,3vw,1rem);
+  letter-spacing:0.18em; text-transform:uppercase;
+  color:var(--text-dim);
+}
+header h1 span { color:var(--amber); opacity:0.8; }
+.header-sub {
+  font-size:clamp(0.36rem,1.4vw,0.46rem);
+  letter-spacing:0.14em; text-transform:uppercase;
+  color:#1e2636; margin-top:3px;
+}
+
+/* ── TOOLBAR ── */
+.toolbar {
+  flex-shrink:0;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:4px 1rem;
+  border-bottom:1px solid var(--border-sub);
+  position:relative; z-index:2;
+  gap:0.5rem;
+}
+.toolbar-left {
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+}
+.view-tab {
+  background:none; border:1px solid var(--border-sub);
+  border-radius:3px; cursor:pointer;
+  font-family:'DM Mono',monospace;
+  font-size:clamp(0.33rem,1.2vw,0.44rem);
+  letter-spacing:0.10em; text-transform:uppercase;
+  color:var(--text-mid); padding:0.2rem 0.6rem;
+  transition:color 0.2s,border-color 0.2s,background 0.2s;
+  white-space:nowrap;
+}
+.view-tab.active {
+  color:var(--amber);
+  border-color:rgba(245,158,11,0.4);
+  background:rgba(245,158,11,0.06);
+}
+.toolbar-hint {
+  font-size:clamp(0.32rem,1.2vw,0.42rem);
+  letter-spacing:0.09em; text-transform:uppercase;
+  color:var(--text-dim); flex-shrink:0;
+}
+
+/* ── MAIN SCROLL ── */
+.main-wrap {
+  flex:1; overflow-y:auto; overflow-x:hidden;
+  position:relative; z-index:1;
+  scrollbar-width:thin; scrollbar-color:#1e2838 transparent;
+  padding:1.2rem 1rem 6rem;
+}
+.main-wrap::-webkit-scrollbar { width:4px; }
+.main-wrap::-webkit-scrollbar-thumb { background:#1e2838; border-radius:2px; }
+
+/* ── DOCUMENT SHELL ── */
+.doc-shell {
+  max-width:780px; margin:0 auto;
+  background:var(--doc-bg);
+  border:1px solid var(--doc-border);
+  border-radius:6px;
+  overflow:hidden;
+  box-shadow:0 0 60px rgba(245,158,11,0.03);
+}
+
+/* Doc header band */
+.doc-header {
+  background:rgba(245,158,11,0.05);
+  border-bottom:1px solid var(--doc-border);
+  padding:1rem 1.4rem 0.8rem;
+  display:flex; flex-direction:column; gap:0.3rem;
+}
+.doc-classification {
+  font-size:clamp(0.32rem,1.2vw,0.42rem);
+  letter-spacing:0.2em; text-transform:uppercase;
+  color:rgba(245,158,11,0.35);
+}
+.doc-title {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(1rem,3.5vw,1.5rem);
+  color:rgba(245,158,11,0.75);
+  letter-spacing:0.04em;
+}
+.doc-subtitle {
+  font-size:clamp(0.4rem,1.5vw,0.52rem);
+  letter-spacing:0.12em; text-transform:uppercase;
+  color:var(--text-mid);
+}
+.doc-meta-row {
+  display:flex; flex-wrap:wrap; gap:0.3rem 1.4rem;
+  margin-top:0.4rem;
+  padding-top:0.4rem;
+  border-top:1px solid rgba(245,158,11,0.08);
+}
+.doc-meta-item {
+  font-size:clamp(0.34rem,1.2vw,0.44rem);
+  letter-spacing:0.08em; text-transform:uppercase;
+  color:var(--text-dim);
+}
+.doc-meta-item strong { color:#3e506a; font-weight:500; }
+
+/* ── SECTION BLOCKS ── */
+.doc-section {
+  border-bottom:1px solid rgba(245,158,11,0.06);
+  cursor:pointer;
+  transition:background 0.22s;
+  position:relative;
+}
+.doc-section:last-child { border-bottom:none; }
+.doc-section:hover { background:rgba(245,158,11,0.025); }
+.doc-section.active { background:rgba(245,158,11,0.045); }
+
+/* Active left accent bar */
+.doc-section::before {
+  content:'';
+  position:absolute; left:0; top:0; bottom:0;
+  width:2px;
+  background:var(--amber);
+  opacity:0;
+  transition:opacity 0.22s;
+}
+.doc-section.active::before { opacity:0.6; }
+
+.section-inner { padding:0.9rem 1.4rem; }
+
+.section-label-row {
+  display:flex; align-items:baseline;
+  justify-content:space-between;
+  margin-bottom:0.5rem;
+  gap:0.5rem;
+}
+.section-number {
+  font-size:clamp(0.32rem,1.1vw,0.42rem);
+  letter-spacing:0.14em; text-transform:uppercase;
+  color:rgba(245,158,11,0.3);
+  flex-shrink:0;
+}
+.section-title {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(0.65rem,2.2vw,0.88rem);
+  color:rgba(245,158,11,0.6);
+  flex:1;
+  transition:color 0.22s;
+}
+.doc-section.active .section-title { color:rgba(245,158,11,0.9); }
+.section-required {
+  font-size:clamp(0.3rem,1.1vw,0.4rem);
+  letter-spacing:0.10em; text-transform:uppercase;
+  padding:0.1rem 0.35rem; border-radius:999px;
+  border:1px solid rgba(245,158,11,0.25);
+  color:rgba(245,158,11,0.4);
+  flex-shrink:0;
+}
+.section-required.mandatory { border-color:rgba(245,158,11,0.5); color:rgba(245,158,11,0.65); }
+
+/* Document body text — looks like real document prose */
+.doc-body {
+  font-family:'Crimson Pro',serif;
+  font-size:clamp(0.65rem,1.9vw,0.82rem);
+  color:var(--text-body);
+  line-height:1.8;
+  letter-spacing:0.01em;
+}
+.doc-body em { color:var(--text-mid); font-style:italic; }
+.doc-body strong { color:#5a7090; font-weight:400; font-style:normal; }
+
+/* Inline data tables inside sections */
+.doc-table {
+  width:100%; margin-top:0.7rem;
+  border-collapse:collapse;
+  font-size:clamp(0.42rem,1.5vw,0.54rem);
+  letter-spacing:0.04em;
+}
+.doc-table th {
+  text-align:left; padding:0.28rem 0.5rem;
+  font-family:'DM Mono',monospace;
+  font-weight:400;
+  font-size:clamp(0.32rem,1.2vw,0.42rem);
+  letter-spacing:0.12em; text-transform:uppercase;
+  color:var(--text-dim);
+  border-bottom:1px solid rgba(245,158,11,0.10);
+}
+.doc-table td {
+  padding:0.32rem 0.5rem;
+  font-family:'Crimson Pro',serif;
+  color:var(--text-body);
+  border-bottom:1px solid rgba(80,120,220,0.05);
+  vertical-align:top;
+  font-size:clamp(0.6rem,1.8vw,0.76rem);
+  line-height:1.6;
+}
+.doc-table tr:last-child td { border-bottom:none; }
+.doc-table .val-pos { color:#34d399; opacity:0.7; }
+.doc-table .val-neg { color:#fb923c; opacity:0.7; }
+.doc-table .val-neutral { color:#818cf8; opacity:0.7; }
+.doc-table .val-amber { color:var(--amber); opacity:0.75; }
+
+/* Bar chart for investment */
+.bar-chart { margin-top:0.75rem; display:flex; flex-direction:column; gap:0.45rem; }
+.bar-row { display:flex; align-items:center; gap:0.6rem; }
+.bar-label {
+  font-size:clamp(0.36rem,1.3vw,0.48rem);
+  letter-spacing:0.06em; text-transform:uppercase;
+  color:var(--text-mid); width:90px; flex-shrink:0; text-align:right;
+}
+.bar-track {
+  flex:1; height:8px; background:rgba(255,255,255,0.04);
+  border-radius:4px; overflow:hidden; position:relative;
+}
+.bar-fill {
+  height:100%; border-radius:4px;
+  animation:growBar 1s cubic-bezier(0.22,1,0.36,1) forwards;
+  transform-origin:left;
+}
+@keyframes growBar { from{width:0} }
+.bar-val {
+  font-size:clamp(0.34rem,1.2vw,0.44rem);
+  letter-spacing:0.06em; color:var(--text-mid); width:48px; flex-shrink:0;
+}
+
+/* Status pills */
+.status-pill {
+  display:inline-block;
+  font-size:clamp(0.3rem,1.1vw,0.40rem);
+  letter-spacing:0.10em; text-transform:uppercase;
+  padding:0.1rem 0.38rem; border-radius:999px;
+  border:1px solid currentColor; opacity:0.7;
+}
+
+/* Annotation tap indicator */
+.tap-hint {
+  position:absolute; right:1rem; top:50%; transform:translateY(-50%);
+  font-size:0.42rem; letter-spacing:0.12em; text-transform:uppercase;
+  color:rgba(245,158,11,0.2);
+  pointer-events:none;
+  transition:opacity 0.2s;
+}
+.doc-section:hover .tap-hint,
+.doc-section.active .tap-hint { opacity:0; }
+
+/* Animate sections in */
+.doc-section {
+  opacity:0;
+  animation:fadeUp 0.4s ease forwards;
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── ANNOTATION PANEL ── */
+.anno-panel {
+  position:fixed; bottom:0; left:0; right:0;
+  background:var(--panel-bg);
+  border-top:1px solid rgba(245,158,11,0.2);
+  transform:translateY(100%);
+  transition:transform 0.32s cubic-bezier(0.32,0.72,0,1);
+  z-index:100; max-height:48vh;
+  display:flex; flex-direction:column;
+}
+.anno-panel.visible { transform:translateY(0); }
+.anno-head {
+  display:flex; align-items:flex-start; justify-content:space-between;
+  padding:0.7rem 1.1rem 0; flex-shrink:0;
+}
+.anno-section-label {
+  font-size:clamp(0.34rem,1.3vw,0.44rem);
+  letter-spacing:0.14em; text-transform:uppercase;
+  color:rgba(245,158,11,0.5); margin-bottom:3px;
+}
+.anno-title {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(0.82rem,3.5vw,1.05rem);
+  color:var(--amber);
+}
+.anno-close {
+  background:none; border:none; color:#3a4a68;
+  font-size:1.1rem; cursor:pointer;
+  padding:0 0 0 0.8rem; flex-shrink:0; align-self:flex-start;
+}
+.anno-tabs {
+  display:flex; border-bottom:1px solid rgba(245,158,11,0.1);
+  flex-shrink:0; margin-top:0.5rem;
+  overflow-x:auto; scrollbar-width:none;
+}
+.anno-tabs::-webkit-scrollbar { display:none; }
+.anno-tab {
+  background:none; border:none;
+  border-bottom:2px solid transparent;
+  color:var(--text-mid);
+  font-family:'DM Mono',monospace;
+  font-size:clamp(0.34rem,1.4vw,0.48rem);
+  letter-spacing:0.09em; text-transform:uppercase;
+  padding:0.32rem 0.7rem; cursor:pointer; white-space:nowrap;
+  transition:color 0.2s,border-color 0.2s;
+}
+.anno-tab.active { color:var(--amber); border-bottom-color:var(--amber); }
+.anno-body {
+  flex:1; overflow-y:auto;
+  padding:0.65rem 1.1rem;
+  padding-bottom:calc(env(safe-area-inset-bottom,0px) + 0.65rem);
+  scrollbar-width:thin; scrollbar-color:#1e2838 transparent;
+}
+.anno-pane { display:none; }
+.anno-pane.active { display:block; }
+.anno-desc {
+  font-size:clamp(0.5rem,1.9vw,0.62rem);
+  color:#5a6a88; line-height:1.75; letter-spacing:0.02em;
+  margin-bottom:0.6rem;
+}
+.anno-why {
+  font-size:clamp(0.48rem,1.8vw,0.6rem);
+  color:rgba(245,158,11,0.55); line-height:1.7; letter-spacing:0.02em;
+  border-left:2px solid rgba(245,158,11,0.2);
+  padding-left:0.6rem; margin-bottom:0.6rem;
+  font-style:italic;
+}
+.anno-list { list-style:none; }
+.anno-list li {
+  display:flex; gap:0.5rem; align-items:flex-start;
+  font-size:clamp(0.48rem,1.8vw,0.6rem);
+  color:#5a6a88; line-height:1.65; letter-spacing:0.02em;
+  margin-bottom:0.32rem;
+}
+.anno-list li::before {
+  content:'▸'; color:var(--amber); opacity:0.55;
+  flex-shrink:0; margin-top:1px; font-size:0.5rem;
+}
+.anno-mistake {
+  background:rgba(220,80,80,0.05);
+  border:1px solid rgba(220,80,80,0.08);
+  border-radius:4px; padding:0.45rem 0.6rem; margin-bottom:0.4rem;
+}
+.anno-mistake strong {
+  display:block;
+  font-size:clamp(0.46rem,1.7vw,0.56rem);
+  color:#9a7070; margin-bottom:2px; font-weight:500;
+}
+.anno-mistake p {
+  font-size:clamp(0.46rem,1.7vw,0.57rem);
+  color:#5a6a88; line-height:1.65;
+}
+.anno-update-note {
+  font-size:clamp(0.38rem,1.4vw,0.5rem);
+  letter-spacing:0.08em;
+  color:rgba(245,158,11,0.4);
+  border-top:1px solid rgba(245,158,11,0.08);
+  padding-top:0.45rem; margin-top:0.45rem;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="back-link" href="index.html">Theme Map</a>
+  <div>
+    <div class="header-eyebrow">PRINCE2 · Business Case Theme</div>
+    <h1>Business <span>Case</span></h1>
+    <div class="header-sub">annotated example · tap any section to explore</div>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="toolbar-left">
+    <button class="view-tab active" data-view="example">Example Document</button>
+    <button class="view-tab" data-view="lifecycle">Lifecycle View</button>
+  </div>
+  <div class="toolbar-hint">tap section to annotate</div>
+</div>
+
+<div class="main-wrap" id="mainWrap">
+
+  <!-- ── EXAMPLE DOCUMENT VIEW ── -->
+  <div id="view-example">
+  <div class="doc-shell" id="docShell">
+
+    <div class="doc-header">
+      <div class="doc-classification">Project Initiation Documentation · Appendix A</div>
+      <div class="doc-title">Business Case</div>
+      <div class="doc-subtitle">Customer Portal Modernisation Programme</div>
+      <div class="doc-meta-row">
+        <div class="doc-meta-item"><strong>Version:</strong> 2.1</div>
+        <div class="doc-meta-item"><strong>Status:</strong> Approved</div>
+        <div class="doc-meta-item"><strong>Owner:</strong> Executive (J. Hargreaves)</div>
+        <div class="doc-meta-item"><strong>Last reviewed:</strong> End of Stage 1</div>
+        <div class="doc-meta-item"><strong>Next review:</strong> End of Stage 2</div>
+      </div>
+    </div>
+
+    <!-- S1: Executive Summary -->
+    <div class="doc-section" data-id="execSummary" style="animation-delay:0.05s">
+      <div class="section-inner">
+        <div class="section-label-row">
+          <span class="section-number">§ 1</span>
+          <span class="section-title">Executive Summary</span>
+          <span class="section-required mandatory">Mandatory</span>
+        </div>
+        <div class="doc-body">
+          The organisation's customer portal has not been materially updated since 2018. Customer satisfaction scores have declined from 78% to 61% over three years, and support call volumes have risen by 34%. This project will replace the existing portal with a modern, self-service platform expected to <strong>reduce support costs by £420,000 per annum</strong> and restore satisfaction scores above 80% within 12 months of go-live.<br><br>
+          The Executive confirms the Business Case remains <em>desirable, viable, and achievable</em> as of the Stage 1 review. Total approved investment is <strong>£1.85M</strong> over 18 months.
+        </div>
+      </div>
+    </div>
+
+    <!-- S2: Reasons / Problem Statement -->
+    <div class="doc-section" data-id="reasons" style="animation-delay:0.10s">
+      <div class="section-inner">
+        <div class="section-label-row">
+          <span class="section-number">§ 2</span>
+          <span class="section-title">Reasons &amp; Strategic Alignment</span>
+          <span class="section-required mandatory">Mandatory</span>
+        </div>
+        <div class="doc-body">
+          The current portal cannot support mobile devices, requires manual staff intervention for 43% of customer requests, and operates on a vendor platform reaching end-of-life in Q3 next year. Failure to act will result in <strong>forced emergency migration</strong>, estimated at 2.4× the cost of planned modernisation, with no opportunity to capture the associated service improvement benefits.<br><br>
+          This project directly supports the corporate strategic objective <em>"Digital First by 2026"</em> and is listed as a Priority 1 initiative in the current programme plan.
+        </div>
+        <table class="doc-table" style="margin-top:0.65rem">
+          <thead><tr><th>Option</th><th>Description</th><th>Verdict</th></tr></thead>
+          <tbody>
+            <tr><td>Do Nothing</td><td>Accept declining CSAT and rising support costs. Platform end-of-life risk materialises in 14 months.</td><td class="val-neg">Rejected</td></tr>
+            <tr><td>Minimal Patch</td><td>Mobile-only fixes. Does not address root causes or end-of-life. Buys ~18 months.</td><td class="val-neg">Rejected</td></tr>
+            <tr><td><strong>Full Modernisation</strong></td><td>Replace portal with modern platform. Captures all benefits. Addresses end-of-life.</td><td class="val-pos">Selected</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- S3: Business Options -->
+    <div class="doc-section" data-id="options" style="animation-delay:0.15s">
+      <div class="section-inner">
+        <div class="section-label-row">
+          <span class="section-number">§ 3</span>
+          <span class="section-title">Expected Benefits</span>
+          <span class="section-required mandatory">Mandatory</span>
+        </div>
+        <div class="doc-body">
+          Benefits are owned by the <strong>Senior User (Head of Customer Operations)</strong> and will be measured against baselines established at project initiation. All benefits are subject to formal review at 6 and 12 months post go-live.
+        </div>
+        <table class="doc-table">
+          <thead><tr><th>Benefit</th><th>Baseline</th><th>Target</th><th>Measure</th><th>Owner</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Reduced support call volume</td>
+              <td>14,200 calls/month</td>
+              <td class="val-pos">9,400 /month</td>
+              <td>Call centre reporting</td>
+              <td>Head of Ops</td>
+            </tr>
+            <tr>
+              <td>Annual support cost saving</td>
+              <td>£1.24M / year</td>
+              <td class="val-pos">£820K / year</td>
+              <td>Finance report</td>
+              <td>CFO</td>
+            </tr>
+            <tr>
+              <td>Customer satisfaction (CSAT)</td>
+              <td>61%</td>
+              <td class="val-pos">≥ 80%</td>
+              <td>Quarterly survey</td>
+              <td>Head of Ops</td>
+            </tr>
+            <tr>
+              <td>Self-service resolution rate</td>
+              <td>57%</td>
+              <td class="val-pos">≥ 85%</td>
+              <td>Portal analytics</td>
+              <td>Product Manager</td>
+            </tr>
+            <tr>
+              <td>Platform maintenance cost</td>
+              <td>£185K / year</td>
+              <td class="val-pos">£70K / year</td>
+              <td>IT cost report</td>
+              <td>IT Director</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- S4: Disbenefits -->
+    <div class="doc-section" data-id="disbenefits" style="animation-delay:0.18s">
+      <div class="section-inner">
+        <div class="section-label-row">
+          <span class="section-number">§ 4</span>
+          <span class="section-title">Disbenefits</span>
+          <span class="section-required mandatory">Mandatory</span>
+        </div>
+        <div class="doc-body">
+          The following negative outcomes are anticipated and have been factored into the investment appraisal. They do not negate the overall business justification.
+        </div>
+        <table class="doc-table">
+          <thead><tr><th>Disbenefit</th><th>Estimated Impact</th><th>Mitigation</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Temporary CSAT dip at go-live</td>
+              <td class="val-neg">−8 to −12 pts (est. 6 weeks)</td>
+              <td>Phased rollout; hypercare support team deployed</td>
+            </tr>
+            <tr>
+              <td>Staff retraining disruption</td>
+              <td class="val-neg">~3 days per agent (×22 agents)</td>
+              <td>Training scheduled outside peak season</td>
+            </tr>
+            <tr>
+              <td>Legacy data migration risk</td>
+              <td class="val-neg">Potential data quality issues</td>
+              <td>Data audit and cleanse in Stage 1 Work Package</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- S5: Timescale -->
+    <div class="doc-section" data-id="timescale" style="animation-delay:0.21s">
+      <div class="section-inner">
+        <div class="section-label-row">
+          <span class="section-number">§ 5</span>
+          <span class="section-title">Timescale</span>
+          <span class="section-required mandatory">Mandatory</span>
+        </div>
+        <div class="doc-body">
+          The project is planned across <strong>four stages</strong> with a total duration of 18 months. Stage boundaries represent formal Project Board reviews at which this Business Case will be re-evaluated.
+        </div>
+        <table class="doc-table">
+          <thead><tr><th>Stage</th><th>Duration</th><th>Key Output</th><th>BC Review</th></tr></thead>
+          <tbody>
+            <tr><td>Initiation</td><td>6 weeks</td><td>PID, Project Plan, all Approaches</td><td class="val-amber">✓ Reviewed</td></tr>
+            <tr><td>Stage 1 · Discovery</td><td>13 weeks</td><td>Requirements spec, architecture</td><td class="val-amber">✓ Reviewed</td></tr>
+            <tr><td>Stage 2 · Build &amp; Test</td><td>18 weeks</td><td>Working system, UAT passed</td><td class="val-neutral">→ Pending</td></tr>
+            <tr><td>Stage 3 · Closure</td><td>6 weeks</td><td>Go-live, handover, End Project Report</td><td class="val-neutral">→ Pending</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- S6: Costs -->
+    <div class="doc-section" data-id="costs" style="animation-delay:0.24s">
+      <div class="section-inner">
+        <div class="section-label-row">
+          <span class="section-number">§ 6</span>
+          <span class="section-title">Costs</span>
+          <span class="section-required mandatory">Mandatory</span>
+        </div>
+        <div class="doc-body">
+          All costs are fully approved. The change budget of <strong>£85,000</strong> is held by the Change Authority and tracked separately. Actuals are reviewed at each Highlight Report.
+        </div>
+        <div class="bar-chart">
+          <div class="bar-row">
+            <div class="bar-label">Internal staff</div>
+            <div class="bar-track"><div class="bar-fill" style="width:38%;background:rgba(245,158,11,0.45)"></div></div>
+            <div class="bar-val">£700K</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Supplier / build</div>
+            <div class="bar-track"><div class="bar-fill" style="width:52%;background:rgba(56,189,248,0.45)"></div></div>
+            <div class="bar-val">£960K</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Infrastructure</div>
+            <div class="bar-track"><div class="bar-fill" style="width:8%;background:rgba(129,140,248,0.45)"></div></div>
+            <div class="bar-val">£105K</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Change budget</div>
+            <div class="bar-track"><div class="bar-fill" style="width:4.5%;background:rgba(244,114,182,0.45)"></div></div>
+            <div class="bar-val">£85K</div>
+          </div>
+        </div>
+        <table class="doc-table" style="margin-top:0.75rem">
+          <thead><tr><th>Category</th><th>Budget</th><th>Actual to date</th><th>Forecast at completion</th></tr></thead>
+          <tbody>
+            <tr><td>Total project cost</td><td>£1,850,000</td><td class="val-pos">£742,000</td><td class="val-neutral">£1,838,000</td></tr>
+            <tr><td>Change budget consumed</td><td>£85,000</td><td class="val-amber">£31,000</td><td class="val-neutral">£65,000 (est.)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- S7: Investment Appraisal -->
+    <div class="doc-section" data-id="investment" style="animation-delay:0.27s">
+      <div class="section-inner">
+        <div class="section-label-row">
+          <span class="section-number">§ 7</span>
+          <span class="section-title">Investment Appraisal</span>
+          <span class="section-required mandatory">Mandatory</span>
+        </div>
+        <div class="doc-body">
+          The appraisal uses a <strong>5-year horizon</strong> from project initiation. Net Present Value is calculated at a discount rate of 8% per the organisation's standard investment policy. Three options were appraised in accordance with PRINCE2 guidance.
+        </div>
+        <table class="doc-table">
+          <thead><tr><th>Metric</th><th>Do Nothing</th><th>Patch Only</th><th>Full Modernisation</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>5-year total cost</td>
+              <td class="val-neg">£4.3M</td>
+              <td class="val-neg">£3.1M</td>
+              <td class="val-pos">£2.7M</td>
+            </tr>
+            <tr>
+              <td>5-year benefits</td>
+              <td class="val-neg">£0</td>
+              <td class="val-neutral">£0.6M</td>
+              <td class="val-pos">£3.5M</td>
+            </tr>
+            <tr>
+              <td>NPV (5 yr, 8%)</td>
+              <td class="val-neg">−£4.3M</td>
+              <td class="val-neg">−£2.5M</td>
+              <td class="val-pos">+£0.8M</td>
+            </tr>
+            <tr>
+              <td>Payback period</td>
+              <td>—</td>
+              <td class="val-neutral">4.2 years</td>
+              <td class="val-pos">2.8 years</td>
+            </tr>
+            <tr>
+              <td>ROI</td>
+              <td>—</td>
+              <td class="val-neutral">19%</td>
+              <td class="val-pos">89%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- S8: Major Risks -->
+    <div class="doc-section" data-id="risks" style="animation-delay:0.30s">
+      <div class="section-inner">
+        <div class="section-label-row">
+          <span class="section-number">§ 8</span>
+          <span class="section-title">Major Risks to the Business Case</span>
+          <span class="section-required mandatory">Mandatory</span>
+        </div>
+        <div class="doc-body">
+          Only risks that could materially affect the viability of this Business Case are listed here. Full risk detail is maintained in the <em>Risk Register</em>.
+        </div>
+        <table class="doc-table">
+          <thead><tr><th>Risk</th><th>Prob</th><th>Impact</th><th>Response</th><th>Owner</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Vendor delivery slippage beyond tolerance</td>
+              <td class="val-neutral">Medium</td>
+              <td class="val-neg">High</td>
+              <td>Milestone-based contracts; Exception Plan trigger at 4-week slip</td>
+              <td>Senior Supplier</td>
+            </tr>
+            <tr>
+              <td>Benefits not realised post go-live</td>
+              <td class="val-neutral">Low–Med</td>
+              <td class="val-neg">High</td>
+              <td>Benefits review at 6 and 12 months; Senior User accountable</td>
+              <td>Senior User</td>
+            </tr>
+            <tr>
+              <td>User adoption failure</td>
+              <td class="val-neutral">Low</td>
+              <td class="val-neutral">Medium</td>
+              <td>Change management plan; training programme; hypercare period</td>
+              <td>PM</td>
+            </tr>
+            <tr>
+              <td>Cost overrun exceeds tolerance</td>
+              <td class="val-neutral">Low</td>
+              <td class="val-neg">High</td>
+              <td>10% cost tolerance set; Exception Report triggers Board review</td>
+              <td>Executive</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- S9: Benefits Management Approach -->
+    <div class="doc-section" data-id="benefits" style="animation-delay:0.33s">
+      <div class="section-inner">
+        <div class="section-label-row">
+          <span class="section-number">§ 9</span>
+          <span class="section-title">Benefits Management Approach</span>
+          <span class="section-required mandatory">Mandatory</span>
+        </div>
+        <div class="doc-body">
+          Benefits realisation extends <strong>beyond project closure</strong>. The Senior User assumes ownership of the Benefits Management Approach from the Executive at the point of project closure. Post-project reviews are a corporate obligation and will be resourced accordingly.
+        </div>
+        <table class="doc-table">
+          <thead><tr><th>Review</th><th>Timing</th><th>Lead</th><th>Reported to</th></tr></thead>
+          <tbody>
+            <tr><td>Benefits baseline confirmed</td><td>At Initiation</td><td>Senior User</td><td>Project Board</td></tr>
+            <tr><td>Interim benefits check</td><td>3 months post go-live</td><td>Senior User</td><td>Corporate Mgmt</td></tr>
+            <tr><td>First formal benefits review</td><td>6 months post go-live</td><td>Senior User</td><td>Corporate Mgmt</td></tr>
+            <tr><td>Full benefits realisation report</td><td>12 months post go-live</td><td>Senior User</td><td>Corporate Mgmt</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- S10: Executive Sign-off -->
+    <div class="doc-section" data-id="signoff" style="animation-delay:0.36s">
+      <div class="section-inner">
+        <div class="section-label-row">
+          <span class="section-number">§ 10</span>
+          <span class="section-title">Executive Confirmation</span>
+          <span class="section-required mandatory">Mandatory</span>
+        </div>
+        <div class="doc-body">
+          I confirm that this Business Case accurately represents the current state of the project justification. The project remains <em>desirable</em> (benefits outweigh costs), <em>viable</em> (achievable within the approved tolerance), and <em>achievable</em> (resources and capability are in place).<br><br>
+          This document supersedes version 2.0 and reflects the outcomes of the Stage 1 End Stage Review held on <strong>14 March</strong>.
+        </div>
+        <table class="doc-table" style="margin-top:0.65rem">
+          <thead><tr><th>Role</th><th>Name</th><th>Signature</th><th>Date</th></tr></thead>
+          <tbody>
+            <tr><td>Executive</td><td>J. Hargreaves</td><td><em style="color:rgba(245,158,11,0.4)">J. Hargreaves</em></td><td>14 Mar</td></tr>
+            <tr><td>Senior User</td><td>M. Okonkwo</td><td><em style="color:rgba(110,231,183,0.4)">M. Okonkwo</em></td><td>14 Mar</td></tr>
+            <tr><td>Senior Supplier</td><td>T. Brandt</td><td><em style="color:rgba(251,146,60,0.4)">T. Brandt</em></td><td>14 Mar</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /doc-shell -->
+  </div><!-- /view-example -->
+
+  <!-- ── LIFECYCLE VIEW ── -->
+  <div id="view-lifecycle" style="display:none">
+  <div class="doc-shell">
+    <div class="doc-header">
+      <div class="doc-title" style="font-size:clamp(0.8rem,2.5vw,1.1rem)">The Business Case as a Living Document</div>
+      <div class="doc-subtitle">How it evolves through the PRINCE2 lifecycle</div>
+    </div>
+
+    <div class="doc-section" data-id="lc-mandate" style="animation-delay:0.05s">
+      <div class="section-inner">
+        <div class="section-label-row">
+          <span class="section-number" style="color:rgba(129,140,248,0.5)">Pre-Project</span>
+          <span class="section-title" style="color:rgba(129,140,248,0.7)">Outline Business Case</span>
+          <span class="section-required" style="border-color:rgba(129,140,248,0.4);color:rgba(129,140,248,0.6)">Starting Up</span>
+        </div>
+        <div class="doc-body">
+          The Executive creates an <strong>Outline Business Case</strong> as part of Starting Up a Project. It is brief — enough to justify whether initiating the project is worthwhile. It answers: what is the problem, what is a rough cost, and is there a plausible benefit? It does not need financial precision at this stage.
+        </div>
+      </div>
+    </div>
+
+    <div class="doc-section" data-id="lc-initiation" style="animation-delay:0.10s">
+      <div class="section-inner">
+        <div class="section-label-row">
+          <span class="section-number" style="color:rgba(56,189,248,0.5)">Initiation</span>
+          <span class="section-title" style="color:rgba(56,189,248,0.7)">Full Business Case Developed</span>
+          <span class="section-required" style="border-color:rgba(56,189,248,0.4);color:rgba(56,189,248,0.6)">Initiating</span>
+        </div>
+        <div class="doc-body">
+          During Initiating a Project, the Business Case is fully developed. All nine sections are completed. Costs, timescales, investment appraisal, benefits with baselines, and the Benefits Management Approach are all agreed. The Project Board authorises the project based on this document. It becomes the <strong>baseline</strong>.
+        </div>
+      </div>
+    </div>
+
+    <div class="doc-section" data-id="lc-stages" style="animation-delay:0.15s">
+      <div class="section-inner">
+        <div class="section-label-row">
+          <span class="section-number" style="color:rgba(52,211,153,0.5)">Each Stage Boundary</span>
+          <span class="section-title" style="color:rgba(52,211,153,0.7)">Business Case Reviewed &amp; Updated</span>
+          <span class="section-required" style="border-color:rgba(52,211,153,0.4);color:rgba(52,211,153,0.6)">Mandatory</span>
+        </div>
+        <div class="doc-body">
+          At every End Stage Review the Project Manager updates the Business Case with actual costs to date, revised forecasts, and any changes to benefits. The Project Board uses it to decide: <em>continue, adjust, or stop?</em> A Business Case that is never updated is a governance failure — the Board is being asked to make decisions blindly.
+        </div>
+        <table class="doc-table" style="margin-top:0.5rem">
+          <thead><tr><th>What changes</th><th>Who updates it</th><th>Who approves</th></tr></thead>
+          <tbody>
+            <tr><td>Actual costs vs forecast</td><td>Project Manager</td><td>Executive</td></tr>
+            <tr><td>Benefits status (still achievable?)</td><td>Senior User</td><td>Executive</td></tr>
+            <tr><td>Risk profile changes</td><td>Project Manager</td><td>Project Board</td></tr>
+            <tr><td>Revised completion forecast</td><td>Project Manager</td><td>Project Board</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="doc-section" data-id="lc-exception" style="animation-delay:0.20s">
+      <div class="section-inner">
+        <div class="section-label-row">
+          <span class="section-number" style="color:rgba(244,114,182,0.5)">Exception</span>
+          <span class="section-title" style="color:rgba(244,114,182,0.7)">Business Case Re-assessed</span>
+          <span class="section-required" style="border-color:rgba(244,114,182,0.4);color:rgba(244,114,182,0.6)">If tolerance breached</span>
+        </div>
+        <div class="doc-body">
+          If an Exception Report is raised — meaning a tolerance is forecast to be exceeded — the Project Board must re-examine the Business Case before authorising an Exception Plan. The project may still be viable, but the numbers must be re-tested. <strong>If the Business Case can no longer be justified, the project should be stopped.</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="doc-section" data-id="lc-closure" style="animation-delay:0.25s">
+      <div class="section-inner">
+        <div class="section-label-row">
+          <span class="section-number" style="color:rgba(245,158,11,0.5)">Closure</span>
+          <span class="section-title" style="color:rgba(245,158,11,0.7)">Final Update &amp; Handover</span>
+          <span class="section-required mandatory">Mandatory</span>
+        </div>
+        <div class="doc-body">
+          At project closure the Business Case is updated with final actuals and included in the <em>End Project Report</em>. The Benefits Management Approach — and accountability for post-project benefits reviews — is formally transferred to the <strong>Senior User</strong>. The project is over; benefits realisation has just begun.
+        </div>
+        <table class="doc-table" style="margin-top:0.5rem">
+          <thead><tr><th>What transfers</th><th>From</th><th>To</th></tr></thead>
+          <tbody>
+            <tr><td>Benefits Management Approach</td><td>Executive</td><td>Senior User</td></tr>
+            <tr><td>Benefits review schedule</td><td>PM</td><td>Senior User / Corporate</td></tr>
+            <tr><td>Final Business Case document</td><td>PM</td><td>Corporate archive</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="doc-section" data-id="lc-post" style="animation-delay:0.30s">
+      <div class="section-inner">
+        <div class="section-label-row">
+          <span class="section-number" style="color:rgba(52,211,153,0.5)">Post-Project</span>
+          <span class="section-title" style="color:rgba(52,211,153,0.7)">Benefits Realisation Reviews</span>
+          <span class="section-required" style="border-color:rgba(52,211,153,0.4);color:rgba(52,211,153,0.6)">Senior User led</span>
+        </div>
+        <div class="doc-body">
+          Benefits reviews are conducted at intervals agreed in the Benefits Management Approach — typically 6 and 12 months post go-live. The Senior User reports to Corporate or Programme management. These reviews are the only way to know whether the Business Case was ever actually true. <strong>Most organisations never conduct them.</strong>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /doc-shell -->
+  </div><!-- /view-lifecycle -->
+
+</div><!-- /main-wrap -->
+
+<!-- ── ANNOTATION PANEL ── -->
+<div class="anno-panel" id="annoPanel">
+  <div class="anno-head">
+    <div>
+      <div class="anno-section-label" id="annoLabel"></div>
+      <div class="anno-title" id="annoTitle"></div>
+    </div>
+    <button class="anno-close" id="annoClose">✕</button>
+  </div>
+  <div class="anno-tabs" id="annoTabs">
+    <button class="anno-tab active" data-tab="purpose">Purpose</button>
+    <button class="anno-tab" data-tab="contains">Must contain</button>
+    <button class="anno-tab" data-tab="mistakes">Pitfalls</button>
+  </div>
+  <div class="anno-body">
+    <div class="anno-pane active" id="anno-purpose"></div>
+    <div class="anno-pane" id="anno-contains"></div>
+    <div class="anno-pane" id="anno-mistakes"></div>
+  </div>
+</div>
+
+<script>
+// ── ANNOTATION DATA ───────────────────────────────────────────────────────────
+const ANNOTATIONS = {
+  execSummary: {
+    label:'§ 1 · Executive Summary',
+    title:'Executive Summary',
+    purpose:{
+      why:'The Executive Summary is the first thing the Project Board reads. It must answer the three PRINCE2 viability tests in plain language: is the project still desirable (benefits outweigh costs), viable (can be done within approved tolerances), and achievable (resources exist)?',
+      points:[
+        'Written for a senior audience — no technical detail',
+        'Should state the current status explicitly at each update',
+        'Must confirm who owns the Business Case (always the Executive)',
+        'References the total approved investment and key benefit headline',
+      ],
+      updateNote:'Update at every stage boundary to reflect current status.',
+    },
+    contains:{
+      points:[
+        'The business problem or opportunity being addressed',
+        'The proposed solution in one or two sentences',
+        'The headline financial benefit and total cost',
+        'An explicit statement that the BC is desirable, viable, and achievable',
+        'Version number and date of last review',
+      ],
+    },
+    mistakes:[
+      {title:'Written once, never updated',body:'The Executive Summary must change at every stage boundary to reflect actual progress. An outdated summary is actively misleading to the Project Board.'},
+      {title:'Too long or technical',body:'The summary is for the Project Board, not the delivery team. If it requires background knowledge to interpret, it has failed its purpose.'},
+    ],
+  },
+  reasons: {
+    label:'§ 2 · Reasons & Strategic Alignment',
+    title:'Reasons & Strategic Alignment',
+    purpose:{
+      why:'This section justifies why the project exists and proves it connects to the organisation\'s strategy. Without this link, the project cannot be prioritised or funded by Corporate/Programme management. It also documents the options appraisal — PRINCE2 requires at least three options including "do nothing".',
+      points:[
+        'Anchors the project to a named strategic objective',
+        'Establishes the cost of inaction — the "do nothing" baseline',
+        'Documents why rejected options were not selected',
+        'Prevents scope creep by defining what the project is NOT doing',
+      ],
+      updateNote:'Revisit at stage boundaries if the strategic context changes.',
+    },
+    contains:{
+      points:[
+        'Description of the problem or opportunity triggering the project',
+        'Named strategic objective(s) this project supports',
+        'At minimum three options: do nothing, minimal approach, recommended approach',
+        'Reason each non-selected option was rejected',
+        'Consequences of not doing the project (cost, risk, missed opportunity)',
+      ],
+    },
+    mistakes:[
+      {title:'Only one option presented',body:'PRINCE2 is explicit: at least three options must be evaluated. Presenting one option is advocacy, not appraisal. It removes the Board\'s ability to exercise genuine governance.'},
+      {title:'No "do nothing" option',body:'Do nothing is always a legitimate option. Ignoring it hides the true cost of inaction and understates the risk of the status quo.'},
+      {title:'Strategy link is vague',body:'"Supports our digital ambitions" is not sufficient. The link must be to a named, documented strategic objective.'},
+    ],
+  },
+  options: {
+    label:'§ 3 · Expected Benefits',
+    title:'Expected Benefits',
+    purpose:{
+      why:'This is the core of the Business Case. Benefits are the reason the project exists. PRINCE2 is very specific: benefits must be measurable, have a named owner, and be traceable back to a baseline. Without this, you cannot conduct a benefits review after the project closes.',
+      points:[
+        'Benefits are owned by the Senior User, not the Project Manager',
+        'Each benefit needs a baseline (current state), a target (future state), and a measurement method',
+        'Benefits are only realised after project closure — not at delivery',
+        'The Senior User is accountable post-project, not the Executive',
+      ],
+      updateNote:'Update at each stage boundary — are benefits still achievable?',
+    },
+    contains:{
+      points:[
+        'Each benefit clearly named and described',
+        'Baseline measurement (current state)',
+        'Target measurement (expected future state)',
+        'How and when the benefit will be measured',
+        'Named owner for each benefit',
+        'Timing — when the benefit is expected to be realised',
+      ],
+    },
+    mistakes:[
+      {title:'Benefits without baselines',body:'A target of "improve CSAT" is meaningless without knowing what CSAT is today. Every benefit must have a starting measurement.'},
+      {title:'Outputs described as benefits',body:'"Deliver new portal" is an output, not a benefit. The benefit is what changes as a result: "reduce support costs by £420K/yr." Projects deliver outputs; benefits are what the organisation gains from using them.'},
+      {title:'No named benefit owner',body:'A benefit with no owner will not be measured post-project. The Senior User must be explicitly assigned.'},
+    ],
+  },
+  disbenefits: {
+    label:'§ 4 · Disbenefits',
+    title:'Disbenefits',
+    purpose:{
+      why:'Disbenefits are negative outcomes that are expected to arise from the project. PRINCE2 requires them to be explicitly acknowledged. Acknowledging them is not a weakness — it shows the Business Case was built honestly and that the benefits still outweigh the costs even accounting for these negatives.',
+      points:[
+        'Every project has disbenefits — ignoring them is a red flag',
+        'Quantify where possible (time, cost, satisfaction impact)',
+        'Document the mitigation plan for each disbenefit',
+        'The investment appraisal must account for disbenefits',
+      ],
+      updateNote:'Add new disbenefits if they emerge during delivery.',
+    },
+    contains:{
+      points:[
+        'Description of each anticipated negative outcome',
+        'Estimated magnitude or impact',
+        'Who is affected',
+        'Mitigation action planned or in place',
+      ],
+    },
+    mistakes:[
+      {title:'No disbenefits listed',body:'Every project creates disruption. A Business Case with no disbenefits has not been thought through honestly and will lose credibility when negative impacts appear unexpectedly.'},
+      {title:'Disbenefits but no mitigations',body:'Listing a disbenefit without a mitigation plan is the same as accepting the risk passively. The Project Board needs to know what is being done about it.'},
+    ],
+  },
+  timescale: {
+    label:'§ 5 · Timescale',
+    title:'Timescale',
+    purpose:{
+      why:'The timescale section links the Business Case to the Project Plan. It shows how long the organisation\'s money is at risk, when benefits will begin to flow, and when each Project Board review will take place. Stage boundaries are not just project milestones — they are governance decision points.',
+      points:[
+        'Each stage is a controlled commitment of money and resource',
+        'Stage boundaries are when the BC is formally re-evaluated',
+        'The Board authorises one stage at a time — not the whole project',
+        'The payback period in the investment appraisal depends on this',
+      ],
+      updateNote:'Update forecast dates at each stage boundary review.',
+    },
+    contains:{
+      points:[
+        'Project start and expected end date',
+        'Duration of each stage',
+        'Key milestones and their dates',
+        'Date of each scheduled Business Case review',
+        'When benefits are expected to begin being realised',
+      ],
+    },
+    mistakes:[
+      {title:'One long plan with no stages',body:'A single end-date with no intermediate reviews removes the Project Board\'s ability to govern. PRINCE2 stages are not optional — they are the governance mechanism.'},
+      {title:'Timescales not updated',body:'A timescale section showing dates from six months ago that have already passed is a visible sign that the Business Case is not being maintained.'},
+    ],
+  },
+  costs: {
+    label:'§ 6 · Costs',
+    title:'Costs',
+    purpose:{
+      why:'The costs section must be complete and honest. It must cover all costs — including change budget, risk budget, and post-project operational cost changes. The Project Board uses this to set tolerances. Actual vs forecast tracking is reviewed at every Highlight Report.',
+      points:[
+        'Costs must include internal staff time, not just supplier costs',
+        'The change budget is separate from the main budget and tracked by the Change Authority',
+        'Ongoing operational cost changes (savings or increases) are part of the appraisal',
+        'Tolerance levels are set based on the cost plan',
+      ],
+      updateNote:'Update actuals at every Highlight Report. Forecast at every stage boundary.',
+    },
+    contains:{
+      points:[
+        'Total project cost broken down by category',
+        'Separate change budget and risk budget',
+        'Actuals to date and forecast at completion',
+        'Post-project operational cost changes (savings or increases)',
+        'Assumptions underpinning the estimates',
+      ],
+    },
+    mistakes:[
+      {title:'Internal costs excluded',body:'Only counting supplier invoices while ignoring internal staff time produces a cost that is always understated. The Project Board cannot set realistic tolerances on an incomplete number.'},
+      {title:'Change budget merged with main budget',body:'The change budget must be tracked separately. When it merges into the main budget, cost overruns become invisible until it is too late.'},
+      {title:'No actuals tracking',body:'A cost section with only the original approved budget and no actuals cannot be used for governance. The Board needs to see where money is being spent now.'},
+    ],
+  },
+  investment: {
+    label:'§ 7 · Investment Appraisal',
+    title:'Investment Appraisal',
+    purpose:{
+      why:'The investment appraisal is the financial proof that the selected option is the best use of the organisation\'s money. It must compare all options — not just the recommended one — using consistent financial techniques. NPV, ROI, and payback period are the most common. PRINCE2 requires at least three options to be compared.',
+      points:[
+        'Must use the organisation\'s standard discount rate for NPV',
+        'All three options must be appraised — not just the recommended one',
+        'Payback period shows how long money is at risk',
+        'ROI must account for full lifecycle costs, not just project costs',
+      ],
+      updateNote:'Recalculate at each stage boundary with actual cost data.',
+    },
+    contains:{
+      points:[
+        'NPV (Net Present Value) for each option over the agreed horizon',
+        'Return on Investment (ROI) for the recommended option',
+        'Payback period — when cumulative benefits exceed total cost',
+        'Assumptions about discount rate, benefit timing, and cost profile',
+        'Sensitivity analysis if numbers are close between options',
+      ],
+    },
+    mistakes:[
+      {title:'Appraisal only for recommended option',body:'Comparing NPV of one option proves nothing. The appraisal must show that the selected option beats the alternatives on financial terms.'},
+      {title:'Benefits double-counted',body:'Using the same cost saving as both a project benefit and an operational budget reduction distorts the ROI calculation.'},
+      {title:'5-year horizon not applied consistently',body:'If one option uses a 3-year horizon and another uses 5 years, the comparison is meaningless. The same horizon must be applied to all options.'},
+    ],
+  },
+  risks: {
+    label:'§ 8 · Major Risks to the Business Case',
+    title:'Major Risks to the Business Case',
+    purpose:{
+      why:'The Business Case only lists risks that could affect whether the project\'s justification remains valid — not every risk on the Risk Register. A risk that delays one work package by two weeks is a project risk. A risk that makes the benefits unachievable is a Business Case risk.',
+      points:[
+        'This is not the full Risk Register — only BC-level threats',
+        'Focus on risks to cost, timescale, and benefit achievement',
+        'Each risk needs a named owner and a response action',
+        'The Executive is responsible for ensuring BC risks are managed',
+      ],
+      updateNote:'Review at every stage boundary. New risks that threaten the BC must be added immediately.',
+    },
+    contains:{
+      points:[
+        'Risks that could make the project no longer viable or desirable',
+        'Probability and impact assessment for each',
+        'Named risk owner (not just "Project Manager" for all)',
+        'Response strategy — not just "monitor"',
+        'Trigger for escalation to the Project Board',
+      ],
+    },
+    mistakes:[
+      {title:'Every project risk listed here',body:'The Business Case risk section should be short — 3 to 6 critical risks maximum. Listing every risk from the register dilutes the BC and buries the important information.'},
+      {title:'"Monitor" as the only risk response',body:'Monitoring is not a response. Every risk needs an action: avoid, reduce, transfer, accept with a contingency, or exploit (for opportunities).'},
+      {title:'No escalation trigger defined',body:'The Project Board must know at what point a risk becomes serious enough to re-examine the Business Case. Without a trigger, risks are managed passively until it is too late.'},
+    ],
+  },
+  benefits: {
+    label:'§ 9 · Benefits Management Approach',
+    title:'Benefits Management Approach',
+    purpose:{
+      why:'The Benefits Management Approach answers the most important question in PRINCE2: how will we know the project was worth it? It defines who measures what, when, and how — and it must survive the project itself. This document is handed to the Senior User at closure and is used to run post-project reviews months or years later.',
+      points:[
+        'Benefits reviews happen after the project closes — not during it',
+        'The Senior User owns this from closure onwards',
+        'Dates and resourcing for reviews must be agreed before the project closes',
+        'Corporate management must receive the final benefits report',
+      ],
+      updateNote:'Finalised at Initiation. Handed to Senior User at closure.',
+    },
+    contains:{
+      points:[
+        'Schedule of benefits reviews with dates and named leads',
+        'Who the reviews are reported to (Corporate / Programme management)',
+        'How each benefit will be measured at each review',
+        'What constitutes successful benefit realisation',
+        'What happens if benefits are not achieved',
+      ],
+    },
+    mistakes:[
+      {title:'No post-project review dates agreed',body:'If review dates are not agreed before the project closes, they never happen. The PM is gone, the team is disbanded, and nobody owns the follow-up.'},
+      {title:'Benefits review left to the PM',body:'The Project Manager has no authority or accountability post-project. The Senior User must own and conduct the reviews — not delegate them back to the delivery team.'},
+      {title:'Benefits Management Approach filed and forgotten',body:'This document must be actively handed over to the Senior User and to Corporate management at closure. It is not an archive document — it is an active instruction set.'},
+    ],
+  },
+  signoff: {
+    label:'§ 10 · Executive Confirmation',
+    title:'Executive Confirmation',
+    purpose:{
+      why:'The Executive\'s signature is not a formality — it is a declaration of personal accountability. PRINCE2 is clear that the Business Case is owned by the Executive alone. By signing, the Executive confirms that the numbers are accurate, the project is still justified, and they accept responsibility for the decision to continue.',
+      points:[
+        'Only the Executive can sign off the Business Case — not the PM',
+        'Each review requires a new sign-off, not just the original signature',
+        'The Senior User and Senior Supplier signatures confirm their sections are accurate',
+        'A Business Case approved without Board member signatures is a governance gap',
+      ],
+      updateNote:'New signatures required at every stage boundary update.',
+    },
+    contains:{
+      points:[
+        'Executive signature and date',
+        'Senior User confirmation of benefits section accuracy',
+        'Senior Supplier confirmation of technical feasibility',
+        'Version number and date this version supersedes',
+        'Reference to the stage boundary at which this version was approved',
+      ],
+    },
+    mistakes:[
+      {title:'Same signature block used across versions',body:'Each version of the Business Case must have a new sign-off date. Reusing the original signature block makes every subsequent version technically unapproved.'},
+      {title:'PM signs on behalf of the Executive',body:'The PM has no authority to sign the Business Case. Accountability for the BC is non-delegable and rests with the Executive.'},
+    ],
+  },
+  // Lifecycle view annotations
+  'lc-mandate': {
+    label:'Pre-Project',
+    title:'Outline Business Case',
+    purpose:{
+      why:'The Outline Business Case is produced during Starting Up a Project. It is deliberately brief — just enough for the Project Board to decide if the project is worth initiating. It does not need a full investment appraisal or detailed benefit measurements. Its purpose is to pass or fail a gate.',
+      points:[
+        'Produced by the Executive and PM during Starting Up',
+        'Used by the Project Board to authorise (or not) the Initiation Stage',
+        'Costs and benefits are estimates at this point — not commitments',
+        'The full Business Case is built during Initiation',
+      ],
+      updateNote:'Evolved into the full Business Case during Initiation.',
+    },
+    contains:{
+      points:[
+        'Problem or opportunity description',
+        'Rough estimate of cost and timescale',
+        'High-level expected benefit',
+        'Confirmation that the project aligns to strategy',
+        'Risks that could prevent initiation being worthwhile',
+      ],
+    },
+    mistakes:[
+      {title:'Treating the outline as the final document',body:'The Outline Business Case is a starting point, not a commitment. Teams that treat it as the final approved document skip the detailed appraisal that justifies real investment.'},
+    ],
+  },
+  'lc-initiation': {
+    label:'Initiation Stage',
+    title:'Full Business Case Developed',
+    purpose:{
+      why:'The Initiation Stage is where the Business Case is fully built. All nine sections are completed, benefits are baselined with measurements, the investment appraisal compares all options, and the Benefits Management Approach defines what happens after closure.',
+      points:[
+        'This is the baseline against which all future updates are compared',
+        'The Project Board authorises the whole project based on this document',
+        'Benefits baselines must be established now — you cannot measure improvement without a starting point',
+        'The Benefits Management Approach is agreed and owned by the Senior User',
+      ],
+      updateNote:'This becomes the v1.0 baseline. All subsequent versions track against it.',
+    },
+    contains:{
+      points:[
+        'All nine Business Case sections completed in full',
+        'Benefits baselined with current-state measurements',
+        'Investment appraisal with three options compared',
+        'Benefits Management Approach with post-project review schedule',
+        'Executive sign-off',
+      ],
+    },
+    mistakes:[
+      {title:'Initiation rushed to get to "real work"',body:'Skipping or abbreviating the Business Case during Initiation means the project starts without a financial baseline. Every cost overrun and benefit shortfall will be invisible.'},
+    ],
+  },
+  'lc-stages': {
+    label:'Stage Boundaries',
+    title:'Business Case Updated at Each Stage',
+    purpose:{
+      why:'At every End Stage Review the Project Manager must update the Business Case with actuals to date and a revised forecast. The Project Board uses this updated document — not the original — to decide whether to authorise the next stage. This is the management-by-exception model in action.',
+      points:[
+        'The Board authorises the next stage based on current, not original, numbers',
+        'If costs are tracking higher, the investment appraisal must be re-run',
+        'If benefits are looking less achievable, this must be stated explicitly',
+        'The Executive must re-sign the updated Business Case',
+      ],
+      updateNote:'Updated before every End Stage Review. Board decision based on updated version.',
+    },
+    contains:{
+      points:[
+        'Actuals to date for all cost categories',
+        'Revised forecast at completion',
+        'Confirmation that benefits are still achievable',
+        'Any new risks that affect the BC viability',
+        'Updated Executive sign-off with current date',
+      ],
+    },
+    mistakes:[
+      {title:'BC updated after the Board meeting, not before',body:'Updating the Business Case after the stage boundary meeting means the Board made its decision on stale data. The update must be completed and reviewed before the meeting.'},
+    ],
+  },
+  'lc-exception': {
+    label:'Exception',
+    title:'Business Case Re-assessed During Exception',
+    purpose:{
+      why:'When a tolerance is forecast to be exceeded, the Project Manager raises an Exception Report. Before the Project Board authorises an Exception Plan, they must re-examine the Business Case. The project may have become unviable. A project that is still running but no longer justifiable should be stopped — and PRINCE2 gives the Board a clear mechanism to do that.',
+      points:[
+        'Exception = the Business Case must be re-examined, not just the plan',
+        'Cost overruns reduce ROI and may push payback beyond the tolerance horizon',
+        'The Board may authorise an Exception Plan, request changes, or close the project',
+        'Stopping a failing project is a success, not a failure, in PRINCE2',
+      ],
+      updateNote:'Re-assessed as part of every Exception Report.',
+    },
+    contains:{
+      points:[
+        'Impact of the exception on forecast cost at completion',
+        'Impact on benefits achievability',
+        'Revised NPV and payback period if materially affected',
+        'Board recommendation: continue, revise, or stop',
+      ],
+    },
+    mistakes:[
+      {title:'Exception Plan approved without BC re-check',body:'An Exception Plan that increases total cost may make the project unviable. Approving it without re-running the investment appraisal is a governance failure.'},
+    ],
+  },
+  'lc-closure': {
+    label:'Closure',
+    title:'Final Business Case & Handover',
+    purpose:{
+      why:'At closure the Business Case receives its final update — actual total cost, final delivery status, and a record of what was and was not achieved. It is included in the End Project Report. The Benefits Management Approach passes from the Executive to the Senior User. The project ends; benefit realisation does not.',
+      points:[
+        'Final version records what was actually delivered and at what cost',
+        'Formally confirms what benefits have been achieved so far',
+        'Benefits Management Approach is handed to the Senior User in writing',
+        'Post-project review dates confirmed and resourced before the project disbands',
+      ],
+      updateNote:'Final update at closure. No further project-team updates after this.',
+    },
+    contains:{
+      points:[
+        'Final actual cost vs original approved budget',
+        'Confirmation of all products delivered and accepted',
+        'Benefits achieved to date (often nil at closure — they come later)',
+        'Formal transfer of Benefits Management Approach to Senior User',
+        'Confirmed dates for post-project benefits reviews',
+      ],
+    },
+    mistakes:[
+      {title:'Project disbanded before benefits review dates are confirmed',body:'Once the project team is gone and the budget is closed, nobody has the authority or incentive to set up a benefits review. It must be arranged before closure.'},
+    ],
+  },
+  'lc-post': {
+    label:'Post-Project',
+    title:'Benefits Realisation Reviews',
+    purpose:{
+      why:'Benefits reviews are the only evidence that the Business Case was ever true. They are the final accountability check. Without them, the organisation cannot know if the investment was worthwhile, cannot calibrate future Business Cases, and cannot hold anyone accountable for what was promised.',
+      points:[
+        'Led by the Senior User, reported to Corporate or Programme management',
+        'Compares actual outcomes to the baselines set at Initiation',
+        'Produces a Benefits Realisation Report',
+        'Feeds lessons back into how the organisation writes future Business Cases',
+      ],
+      updateNote:'Conducted at intervals defined in the Benefits Management Approach.',
+    },
+    contains:{
+      points:[
+        'Actual measured values for each benefit vs the baseline and target',
+        'Explanation of any variances',
+        'Assessment of whether remaining benefits are still expected',
+        'Lessons for future projects',
+        'Sign-off from Senior User and Corporate management',
+      ],
+    },
+    mistakes:[
+      {title:'Reviews never conducted',body:'Most organisations never conduct formal benefits reviews. Without them, the Business Case was a promise that was never tested, and the same mistakes will be made on the next project.'},
+      {title:'Review delegated to someone with no authority',body:'The Senior User must personally lead the benefits review. Delegating it to a junior analyst means nobody at decision-making level is accountable for the result.'},
+    ],
+  },
+};
+
+// ── TAB & VIEW SWITCHING ──────────────────────────────────────────────────────
+let currentView = 'example';
+
+document.getElementById('viewTabs') && document.querySelector('.toolbar').addEventListener('click', e => {
+  const btn = e.target.closest('.view-tab');
+  if (!btn) return;
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  currentView = btn.dataset.view;
+  document.getElementById('view-example').style.display   = currentView === 'example'   ? '' : 'none';
+  document.getElementById('view-lifecycle').style.display = currentView === 'lifecycle' ? '' : 'none';
+  closePanel();
+});
+
+// ── SECTION CLICK → ANNOTATE ─────────────────────────────────────────────────
+document.querySelectorAll('.doc-section').forEach((sec, i) => {
+  sec.addEventListener('click', e => {
+    e.stopPropagation();
+    const id = sec.dataset.id;
+    const data = ANNOTATIONS[id];
+    if (!data) return;
+    // Deactivate all, activate this
+    document.querySelectorAll('.doc-section').forEach(s => s.classList.remove('active'));
+    sec.classList.add('active');
+    openPanel(data);
+  });
+});
+
+document.getElementById('mainWrap').addEventListener('click', closePanel);
+
+function openPanel(data) {
+  document.getElementById('annoLabel').textContent = data.label;
+  document.getElementById('annoTitle').textContent = data.title;
+
+  // Purpose pane
+  const pPane = document.getElementById('anno-purpose');
+  pPane.innerHTML =
+    `<p class="anno-why">${data.purpose.why}</p>` +
+    `<ul class="anno-list">${data.purpose.points.map(p=>`<li>${p}</li>`).join('')}</ul>` +
+    (data.purpose.updateNote ? `<p class="anno-update-note">↻ ${data.purpose.updateNote}</p>` : '');
+
+  // Contains pane
+  const cPane = document.getElementById('anno-contains');
+  cPane.innerHTML = data.contains
+    ? `<ul class="anno-list">${data.contains.points.map(p=>`<li>${p}</li>`).join('')}</ul>`
+    : '<p class="anno-desc">No specific content requirements for this entry.</p>';
+
+  // Mistakes pane
+  const mPane = document.getElementById('anno-mistakes');
+  mPane.innerHTML = (data.mistakes||[]).map(m=>
+    `<div class="anno-mistake"><strong>⚠ ${m.title}</strong><p>${m.body}</p></div>`
+  ).join('') || '<p class="anno-desc">No specific pitfalls listed.</p>';
+
+  // Reset to Purpose tab
+  switchAnnoTab('purpose');
+  document.getElementById('annoPanel').classList.add('visible');
+}
+
+function closePanel() {
+  document.getElementById('annoPanel').classList.remove('visible');
+  document.querySelectorAll('.doc-section').forEach(s => s.classList.remove('active'));
+}
+
+document.getElementById('annoClose').addEventListener('click', closePanel);
+
+document.getElementById('annoTabs').addEventListener('click', e => {
+  const btn = e.target.closest('.anno-tab');
+  if (!btn) return;
+  switchAnnoTab(btn.dataset.tab);
+});
+
+function switchAnnoTab(name) {
+  document.querySelectorAll('.anno-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.anno-pane').forEach(p => p.classList.toggle('active', p.id === 'anno-' + name));
+}
+</script>
+</body>
+</html>

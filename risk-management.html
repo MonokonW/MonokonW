@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PRINCE2 · Risk Management</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
+
+:root {
+  --bg:         #090c12;
+  --grid-line:  rgba(80,110,180,0.035);
+  --orange:     #fb923c;
+  --border-sub: rgba(80,120,220,0.10);
+  --border-mid: rgba(80,120,220,0.18);
+  --text-dim:   #2e3a52;
+  --text-mid:   #4a5878;
+  --text-body:  #6a7a98;
+  --text-bright:#b0bcd0;
+  --panel-bg:   #0d1120;
+
+  /* Heat map zone colours */
+  --z-low:      rgba(52,211,153,0.12);
+  --z-med:      rgba(245,158,11,0.12);
+  --z-high:     rgba(251,146,60,0.16);
+  --z-crit:     rgba(239,68,68,0.18);
+
+  /* Risk type */
+  --threat:     #fb923c;
+  --oppty:      #34d399;
+
+  /* Status */
+  --s-open:     #818cf8;
+  --s-active:   #fb923c;
+  --s-closed:   #2e3a52;
+  --s-watch:    #f59e0b;
+}
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html,body { width:100%; height:100%; overflow:hidden; }
+body {
+  background:var(--bg); font-family:'DM Mono',monospace;
+  color:var(--text-bright); display:flex; flex-direction:column;
+}
+body::before {
+  content:''; position:fixed; inset:0;
+  background-image:
+    linear-gradient(var(--grid-line) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);
+  background-size:28px 28px; pointer-events:none; z-index:0;
+}
+
+/* ── HEADER ── */
+header {
+  flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  text-align:center;
+  padding:calc(env(safe-area-inset-top,0px) + 10px) 3rem 6px;
+  position:relative; z-index:2;
+}
+.back-link {
+  position:absolute; left:1rem; top:50%; transform:translateY(-50%);
+  display:inline-flex; align-items:center; gap:5px;
+  font-size:clamp(0.36rem,1.4vw,0.48rem); letter-spacing:0.12em;
+  text-transform:uppercase; color:var(--text-dim); text-decoration:none;
+  transition:color 0.2s; white-space:nowrap;
+}
+.back-link:hover { color:var(--orange); }
+.back-link::before { content:'←'; font-size:0.7rem; }
+.header-eyebrow {
+  font-size:clamp(0.38rem,1.4vw,0.46rem); letter-spacing:0.22em;
+  text-transform:uppercase; color:var(--text-dim); margin-bottom:3px;
+}
+header h1 {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(0.72rem,3vw,1rem);
+  letter-spacing:0.18em; text-transform:uppercase; color:var(--text-dim);
+}
+header h1 span { color:var(--orange); opacity:0.8; }
+.header-sub {
+  font-size:clamp(0.36rem,1.4vw,0.46rem); letter-spacing:0.14em;
+  text-transform:uppercase; color:#1e2636; margin-top:3px;
+}
+
+/* ── TOOLBAR ── */
+.toolbar {
+  flex-shrink:0; display:flex; align-items:center; gap:8px;
+  padding:4px 1rem; border-bottom:1px solid var(--border-sub);
+  position:relative; z-index:2; flex-wrap:wrap;
+}
+.view-tab {
+  background:none; border:1px solid var(--border-sub); border-radius:3px;
+  cursor:pointer; font-family:'DM Mono',monospace;
+  font-size:clamp(0.33rem,1.2vw,0.44rem); letter-spacing:0.10em;
+  text-transform:uppercase; color:var(--text-mid); padding:0.2rem 0.6rem;
+  transition:color 0.2s,border-color 0.2s,background 0.2s; white-space:nowrap;
+}
+.view-tab.active {
+  color:var(--orange); border-color:rgba(251,146,60,0.4);
+  background:rgba(251,146,60,0.06);
+}
+
+/* ── MAIN SCROLL ── */
+.main-wrap {
+  flex:1; overflow-y:auto; overflow-x:hidden;
+  position:relative; z-index:1;
+  scrollbar-width:thin; scrollbar-color:#1e2838 transparent;
+  padding:1rem 1rem 6rem;
+}
+.main-wrap::-webkit-scrollbar { width:4px; }
+.main-wrap::-webkit-scrollbar-thumb { background:#1e2838; border-radius:2px; }
+
+.section-heading {
+  font-size:clamp(0.34rem,1.3vw,0.46rem); letter-spacing:0.18em;
+  text-transform:uppercase; color:var(--text-dim);
+  margin-bottom:0.7rem; padding-bottom:0.35rem;
+  border-bottom:1px solid var(--border-sub);
+}
+.section-heading span { color:var(--orange); opacity:0.55; }
+
+/* ══════════════════════════════════════════════
+   HEAT MAP VIEW
+══════════════════════════════════════════════ */
+#view-heatmap { max-width:700px; margin:0 auto; }
+
+.heatmap-legend {
+  display:flex; flex-wrap:wrap; gap:6px 16px; margin-bottom:0.8rem;
+}
+.hm-leg {
+  display:flex; align-items:center; gap:5px;
+  font-size:clamp(0.33rem,1.2vw,0.43rem); letter-spacing:0.08em;
+  text-transform:uppercase; color:var(--text-mid);
+}
+.hm-dot { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
+
+.heatmap-wrap {
+  position:relative; width:100%;
+  overflow-x:auto; overflow-y:hidden;
+  scrollbar-width:thin; scrollbar-color:#1e2838 transparent;
+}
+.heatmap-wrap::-webkit-scrollbar { height:3px; }
+.heatmap-wrap::-webkit-scrollbar-thumb { background:#1e2838; border-radius:2px; }
+
+svg.hm-svg { display:block; overflow:visible; }
+
+/* Risk bubble */
+.risk-bubble {
+  cursor:pointer;
+  transition:filter 0.2s;
+}
+.risk-bubble:hover { filter:brightness(1.4); }
+.risk-bubble.active .rb-circle { stroke-width:2; filter:brightness(1.5); }
+
+/* ── RISK PROFILE BARS ── */
+.profile-section { margin-top:1.2rem; }
+.profile-bars { display:flex; flex-direction:column; gap:0.4rem; margin-top:0.5rem; }
+.pb-row { display:flex; align-items:center; gap:0.6rem; }
+.pb-label {
+  font-size:clamp(0.33rem,1.2vw,0.43rem); letter-spacing:0.06em;
+  text-transform:uppercase; color:var(--text-mid); width:80px; flex-shrink:0; text-align:right;
+}
+.pb-track {
+  flex:1; height:8px; background:rgba(255,255,255,0.04);
+  border-radius:4px; overflow:hidden;
+}
+.pb-fill {
+  height:100%; border-radius:4px;
+  animation:growBar 0.9s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+@keyframes growBar { from{width:0} }
+.pb-val {
+  font-size:clamp(0.33rem,1.2vw,0.44rem); color:var(--text-mid);
+  width:40px; flex-shrink:0; text-align:right;
+}
+
+/* ══════════════════════════════════════════════
+   RISK REGISTER VIEW
+══════════════════════════════════════════════ */
+#view-register { max-width:860px; margin:0 auto; }
+
+.register-controls {
+  display:flex; flex-wrap:wrap; gap:6px; margin-bottom:0.8rem;
+}
+.filter-btn {
+  background:none; border:1px solid var(--border-sub); border-radius:3px;
+  cursor:pointer; font-family:'DM Mono',monospace;
+  font-size:clamp(0.32rem,1.2vw,0.42rem); letter-spacing:0.08em;
+  text-transform:uppercase; color:var(--text-mid); padding:0.18rem 0.5rem;
+  transition:all 0.18s;
+}
+.filter-btn.active {
+  border-color:rgba(251,146,60,0.4); color:var(--orange);
+  background:rgba(251,146,60,0.06);
+}
+
+.register-table-wrap { overflow-x:auto; scrollbar-width:thin; scrollbar-color:#1e2838 transparent; }
+.register-table { width:100%; border-collapse:collapse; min-width:640px; }
+.register-table th {
+  text-align:left; padding:0.28rem 0.5rem;
+  font-size:clamp(0.30rem,1.1vw,0.40rem); letter-spacing:0.14em;
+  text-transform:uppercase; color:var(--text-dim);
+  border-bottom:1px solid rgba(251,146,60,0.12); white-space:nowrap;
+}
+.register-table td {
+  padding:0.36rem 0.5rem;
+  font-size:clamp(0.42rem,1.5vw,0.54rem);
+  color:var(--text-body); border-bottom:1px solid rgba(80,120,220,0.05);
+  vertical-align:top; line-height:1.5;
+}
+.register-table tbody tr { cursor:pointer; transition:background 0.18s; }
+.register-table tbody tr:hover { background:rgba(251,146,60,0.03); }
+.register-table tbody tr.active-row { background:rgba(251,146,60,0.06); }
+
+.type-badge, .status-badge, .resp-badge {
+  display:inline-block; font-size:clamp(0.28rem,1vw,0.38rem);
+  letter-spacing:0.08em; text-transform:uppercase;
+  padding:0.09rem 0.32rem; border-radius:999px;
+  border:1px solid currentColor; white-space:nowrap;
+}
+.prob-bar {
+  display:inline-flex; gap:2px; align-items:center;
+}
+.prob-pip {
+  width:5px; height:5px; border-radius:1px;
+}
+
+/* ══════════════════════════════════════════════
+   RISK CYCLE VIEW
+══════════════════════════════════════════════ */
+#view-cycle { max-width:700px; margin:0 auto; }
+
+.cycle-wrap {
+  overflow-x:auto; scrollbar-width:thin; scrollbar-color:#1e2838 transparent;
+}
+svg.cycle-svg { display:block; overflow:visible; }
+
+.cycle-step {
+  cursor:pointer; transition:filter 0.2s;
+}
+.cycle-step:hover { filter:brightness(1.3); }
+
+.response-grid {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:8px; margin-top:0.7rem;
+}
+.resp-card {
+  background:rgba(255,255,255,0.02); border:1px solid var(--border-sub);
+  border-radius:5px; padding:0.6rem 0.7rem;
+  cursor:pointer; transition:border-color 0.2s,background 0.2s;
+  animation:fadeUp 0.35s ease forwards; opacity:0;
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:none} }
+.resp-card:hover { border-color:rgba(251,146,60,0.3); background:rgba(251,146,60,0.03); }
+.resp-card.active { border-color:rgba(251,146,60,0.5); background:rgba(251,146,60,0.07); }
+.resp-type {
+  font-size:clamp(0.3rem,1.1vw,0.4rem); letter-spacing:0.14em;
+  text-transform:uppercase; margin-bottom:3px;
+}
+.resp-name {
+  font-size:clamp(0.46rem,1.7vw,0.58rem); color:var(--text-bright);
+  margin-bottom:4px;
+}
+.resp-applies {
+  font-size:clamp(0.3rem,1.1vw,0.4rem); letter-spacing:0.08em;
+  text-transform:uppercase; color:var(--text-dim);
+}
+
+/* ── DETAIL PANEL ── */
+.detail-panel {
+  position:fixed; bottom:0; left:0; right:0;
+  background:var(--panel-bg);
+  border-top:1px solid rgba(251,146,60,0.2);
+  transform:translateY(100%);
+  transition:transform 0.32s cubic-bezier(0.32,0.72,0,1);
+  z-index:100; max-height:52vh;
+  display:flex; flex-direction:column;
+}
+.detail-panel.visible { transform:translateY(0); }
+.dp-head {
+  display:flex; align-items:flex-start; justify-content:space-between;
+  padding:0.7rem 1.1rem 0; flex-shrink:0;
+}
+.dp-eyebrow {
+  font-size:clamp(0.34rem,1.3vw,0.44rem); letter-spacing:0.14em;
+  text-transform:uppercase; color:rgba(251,146,60,0.45); margin-bottom:3px;
+}
+.dp-title {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(0.82rem,3.5vw,1.05rem); color:var(--orange);
+}
+.dp-close {
+  background:none; border:none; color:#3a4a68;
+  font-size:1.1rem; cursor:pointer;
+  padding:0 0 0 0.8rem; flex-shrink:0; align-self:flex-start;
+}
+.dp-tabs {
+  display:flex; border-bottom:1px solid rgba(251,146,60,0.1);
+  flex-shrink:0; margin-top:0.5rem; overflow-x:auto; scrollbar-width:none;
+}
+.dp-tabs::-webkit-scrollbar { display:none; }
+.dp-tab {
+  background:none; border:none; border-bottom:2px solid transparent;
+  color:var(--text-mid); font-family:'DM Mono',monospace;
+  font-size:clamp(0.34rem,1.4vw,0.48rem); letter-spacing:0.09em;
+  text-transform:uppercase; padding:0.32rem 0.7rem;
+  cursor:pointer; white-space:nowrap; transition:color 0.2s,border-color 0.2s;
+}
+.dp-tab.active { color:var(--orange); border-bottom-color:var(--orange); }
+.dp-body {
+  flex:1; overflow-y:auto;
+  padding:0.65rem 1.1rem;
+  padding-bottom:calc(env(safe-area-inset-bottom,0px) + 0.65rem);
+  scrollbar-width:thin; scrollbar-color:#1e2838 transparent;
+}
+.dp-desc {
+  font-size:clamp(0.5rem,1.9vw,0.62rem); color:#5a6a88;
+  line-height:1.75; letter-spacing:0.02em; margin-bottom:0.6rem;
+}
+.dp-rule {
+  font-size:clamp(0.48rem,1.8vw,0.6rem); color:rgba(251,146,60,0.5);
+  line-height:1.7; border-left:2px solid rgba(251,146,60,0.2);
+  padding-left:0.6rem; margin-bottom:0.55rem; font-style:italic;
+}
+.dp-fields {
+  display:grid; grid-template-columns:1fr 1fr; gap:0.35rem 0.8rem;
+  margin-bottom:0.55rem;
+}
+.dp-field-label {
+  font-size:clamp(0.3rem,1.1vw,0.4rem); letter-spacing:0.12em;
+  text-transform:uppercase; color:var(--text-dim);
+}
+.dp-field-val {
+  font-size:clamp(0.44rem,1.6vw,0.56rem); color:var(--text-body); margin-top:1px;
+}
+.dp-list { list-style:none; }
+.dp-list li {
+  display:flex; gap:0.5rem; align-items:flex-start;
+  font-size:clamp(0.48rem,1.8vw,0.6rem); color:#5a6a88;
+  line-height:1.65; letter-spacing:0.02em; margin-bottom:0.3rem;
+}
+.dp-list li::before {
+  content:'▸'; color:var(--orange); opacity:0.55;
+  flex-shrink:0; margin-top:1px; font-size:0.5rem;
+}
+.dp-mistake {
+  background:rgba(220,80,80,0.05); border:1px solid rgba(220,80,80,0.08);
+  border-radius:4px; padding:0.4rem 0.55rem; margin-bottom:0.38rem;
+}
+.dp-mistake strong {
+  display:block; font-size:clamp(0.44rem,1.6vw,0.54rem);
+  color:#9a7070; margin-bottom:2px; font-weight:500;
+}
+.dp-mistake p { font-size:clamp(0.44rem,1.6vw,0.55rem); color:#5a6a88; line-height:1.6; }
+.dp-oppty {
+  border-left:2px solid rgba(52,211,153,0.3); padding-left:0.6rem;
+  font-size:clamp(0.46rem,1.7vw,0.58rem); color:rgba(52,211,153,0.6);
+  line-height:1.65; margin-bottom:0.5rem; font-style:italic;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="back-link" href="index.html">Theme Map</a>
+  <div>
+    <div class="header-eyebrow">PRINCE2 · Risk Theme</div>
+    <h1>Risk <span>Management</span></h1>
+    <div class="header-sub">heat map · risk register · response types · tap to explore</div>
+  </div>
+</header>
+
+<div class="toolbar" id="toolbar">
+  <button class="view-tab active" data-view="heatmap">Heat Map</button>
+  <button class="view-tab" data-view="register">Risk Register</button>
+  <button class="view-tab" data-view="cycle">Risk Cycle & Responses</button>
+</div>
+
+<div class="main-wrap" id="mainWrap">
+  <div id="view-heatmap"></div>
+  <div id="view-register" style="display:none"></div>
+  <div id="view-cycle"    style="display:none"></div>
+</div>
+
+<div class="detail-panel" id="detailPanel">
+  <div class="dp-head">
+    <div>
+      <div class="dp-eyebrow" id="dpEyebrow"></div>
+      <div class="dp-title"   id="dpTitle"></div>
+    </div>
+    <button class="dp-close" id="dpClose">✕</button>
+  </div>
+  <div class="dp-tabs" id="dpTabs"></div>
+  <div class="dp-body"  id="dpBody"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// RISK DATA — Customer Portal Modernisation project
+// ═══════════════════════════════════════════════════════════════════════════
+const RISKS = [
+  {
+    id:'R-001', type:'Threat',
+    title:'Vendor delivery slippage',
+    desc:'The primary build supplier may not deliver at the velocity assumed in the Stage Plan. Historical performance on similar contracts suggests a 30% probability of slipping beyond tolerance in a stage of this length.',
+    prob:3, impact:4, proximity:'Stage 2',
+    owner:'Senior Supplier', actionee:'PM',
+    response:'Reduce', responseDetail:'Weekly progress reporting against milestone plan. Contractual milestone gates with financial penalties for slippage beyond 2 weeks. Exception Report triggered at 4-week forecast slip.',
+    residualProb:2, residualImpact:3,
+    status:'Active',
+    earlyWarning:'Velocity drops below 75% of plan for two consecutive weeks',
+    budget:'£12,000 contingency allocated',
+    secondary:'Accelerated testing scope may be needed if build is rushed — new threat R-009.',
+    eyebrow:'Threat · R-001',
+    notes:'Reviewed at Stage 1 boundary — still valid. Velocity currently at 88% of plan.',
+  },
+  {
+    id:'R-002', type:'Threat',
+    title:'Data migration quality failure',
+    desc:'Legacy records pre-2015 have inconsistent data formats not fully understood at planning. If 10%+ of records fail migration, go-live will be blocked and the business case benefit timeline will shift.',
+    prob:3, impact:5, proximity:'Stage 2',
+    owner:'Data Lead', actionee:'Data Lead',
+    response:'Reduce', responseDetail:'Data audit and cleanse Work Package added to Stage 2. Parallel run of old and new system for 4 weeks post go-live. Acceptance criteria: less than 2% migration failure rate.',
+    residualProb:2, residualImpact:4,
+    status:'Active',
+    earlyWarning:'Migration test runs failing on more than 5% of sample records',
+    budget:'£8,500 contingency for data cleanse activity',
+    secondary:'Extended parallel running may delay decommission of legacy system — operational cost risk.',
+    eyebrow:'Threat · R-002',
+    notes:'ISS-008 has now raised this as a live concern. Risk owner reviewing weekly.',
+  },
+  {
+    id:'R-003', type:'Threat',
+    title:'Key technical resource leaves project',
+    desc:'The lead architect holds critical knowledge of the integration layer. Departure mid-project would cause significant rework and delay. No current succession plan exists.',
+    prob:2, impact:4, proximity:'Any stage',
+    owner:'PM', actionee:'PM',
+    response:'Reduce', responseDetail:'Knowledge transfer sessions scheduled. Architecture decisions documented in Architecture Decision Records (ADRs). Secondary architect being upskilled.',
+    residualProb:1, residualImpact:3,
+    status:'Watch',
+    earlyWarning:'Lead architect signals dissatisfaction or reduced engagement',
+    budget:'£5,000 for recruitment / contractor cover if needed',
+    secondary:'Documentation effort may add 3–5 days to Stage 2.',
+    eyebrow:'Threat · R-003',
+    notes:'ADR documentation started Stage 2 Wk 3. Secondary architect 60% upskilled.',
+  },
+  {
+    id:'R-004', type:'Threat',
+    title:'User adoption failure at go-live',
+    desc:'If the portal UX is significantly different from the legacy system without adequate training, customers and internal agents may resist the new tool — delaying the realisation of self-service benefits.',
+    prob:2, impact:4, proximity:'Stage 3',
+    owner:'Senior User', actionee:'Training Lead',
+    response:'Reduce', responseDetail:'UX research conducted with 12 representative users in Stage 1. Training programme planned for all 22 agents. Hypercare support team deployed for 6 weeks post go-live.',
+    residualProb:1, residualImpact:3,
+    status:'Watch',
+    earlyWarning:'UAT satisfaction scores below 70% among agent group',
+    budget:'£6,000 for training materials and hypercare staffing',
+    secondary:'Low adoption delays CSAT benefit realisation — may affect Business Case review at 6 months.',
+    eyebrow:'Threat · R-004',
+    notes:'UX research completed. Training plan draft approved by Senior User.',
+  },
+  {
+    id:'R-005', type:'Threat',
+    title:'Change budget exhausted before stage end',
+    desc:'Current RFC volume is higher than anticipated. At current approval rate the change budget may be depleted before Stage 2 completes, requiring either Project Board escalation or scope compromise.',
+    prob:3, impact:3, proximity:'Stage 2',
+    owner:'PM', actionee:'Change Authority',
+    response:'Reduce', responseDetail:'RFC triage introduced — Change Authority now reviews priority before formal logging. Deferral of non-critical RFCs to Stage 3 backlog. Monthly budget consumed report to Project Board.',
+    residualProb:2, residualImpact:2,
+    status:'Active',
+    earlyWarning:'Change budget below 30% with more than 4 weeks of stage remaining',
+    budget:'£85,000 change budget (tracked separately)',
+    secondary:'Deferred RFCs may increase Stage 3 scope and cost.',
+    eyebrow:'Threat · R-005',
+    notes:'£31,000 consumed of £85,000. On current trajectory budget will last.',
+  },
+  {
+    id:'R-006', type:'Threat',
+    title:'Security vulnerability in third-party component',
+    desc:'The authentication module uses an open-source OAuth library. A critical vulnerability could be disclosed at any point, requiring emergency patching that disrupts the development schedule.',
+    prob:2, impact:3, proximity:'Any stage',
+    owner:'IT Security', actionee:'Security Engineer',
+    response:'Accept (contingency)', responseDetail:'Automated dependency scanning (Dependabot) active on all repositories. 48-hour emergency patch protocol agreed with Security team. Contingency time built into Stage 2 plan.',
+    residualProb:2, residualImpact:2,
+    status:'Watch',
+    earlyWarning:'Security advisory raised against any dependency in SBOM',
+    budget:'Covered in general contingency',
+    secondary:'Emergency patch may displace planned sprint work.',
+    eyebrow:'Threat · R-006',
+    notes:'No active advisories as of Stage 2 Wk 6. Scanning healthy.',
+  },
+  {
+    id:'R-007', type:'Opportunity',
+    title:'Early vendor delivery enables extended UAT',
+    desc:'If the vendor delivers the build 2–3 weeks ahead of plan, additional UAT time could be used to test edge cases beyond the acceptance criteria, reducing post-go-live defect risk significantly.',
+    prob:2, impact:3, proximity:'Stage 2',
+    owner:'PM', actionee:'QA Lead',
+    response:'Exploit', responseDetail:'UAT plan extended version prepared and ready to activate. QA Lead briefed to mobilise extended testing team within 48 hours of early delivery confirmation.',
+    residualProb:2, residualImpact:3,
+    status:'Watch',
+    earlyWarning:'Build velocity tracking 15%+ ahead of plan for 3 consecutive weeks',
+    budget:'£3,000 for extended QA resource if triggered',
+    secondary:'Extended UAT may reveal additional off-specs — potential new issues.',
+    eyebrow:'Opportunity · R-007',
+    notes:'Current velocity at 88% — not yet triggering. Being monitored weekly.',
+  },
+  {
+    id:'R-008', type:'Opportunity',
+    title:'Platform reuse across other business units',
+    desc:'The new portal platform architecture could be reused by two other business units currently running legacy self-service systems. This would multiply the return on investment significantly beyond the original Business Case.',
+    prob:3, impact:4, proximity:'Post-project',
+    owner:'Executive', actionee:'Head of Architecture',
+    response:'Share', responseDetail:'Architecture documented with reuse in mind. Executive has flagged to Corporate management for future programme consideration. Business units invited to observe Stage 2 UAT.',
+    residualProb:3, residualImpact:4,
+    status:'Watch',
+    earlyWarning:'Other BU heads express interest in platform',
+    budget:'No additional budget required at this stage',
+    secondary:'Reuse scope may change operational support model post-handover.',
+    eyebrow:'Opportunity · R-008',
+    notes:'Two BU heads have attended UAT observation. Corporate programme board aware.',
+  },
+  {
+    id:'R-009', type:'Threat',
+    title:'Regulatory change affects data handling requirements',
+    desc:'Pending regulatory guidance on customer data retention (expected Q4) may require changes to how customer records are stored and purged. If guidance is published mid-build, rework could be significant.',
+    prob:2, impact:4, proximity:'Stage 2–3',
+    owner:'PM', actionee:'Legal Counsel',
+    response:'Avoid', responseDetail:'Legal Counsel monitoring regulatory pipeline. Architecture designed with data handling configuration externally managed (not hardcoded) to minimise rework cost if guidance changes.',
+    residualProb:1, residualImpact:2,
+    status:'Watch',
+    earlyWarning:'Regulatory consultation period opens or draft guidance published',
+    budget:'£4,000 contingency for minor rework',
+    secondary:'If major rework required, this becomes a project-level risk requiring Exception Report.',
+    eyebrow:'Threat · R-009',
+    notes:'No guidance published yet. Legal Counsel on monitoring brief.',
+  },
+  {
+    id:'R-010', type:'Opportunity',
+    title:'Customer survey reveals unmet needs for new feature',
+    desc:'An in-progress customer survey may reveal a high-demand feature not in the current scope. If discovered early enough, it could be incorporated at minimal marginal cost, significantly boosting CSAT benefit.',
+    prob:2, impact:3, proximity:'Stage 2',
+    owner:'Senior User', actionee:'Product Manager',
+    response:'Enhance', responseDetail:'Survey results fast-tracked for review by Senior User before Stage 2 scope is finalised. Change Authority pre-briefed to prioritise any resulting RFC.',
+    residualProb:2, residualImpact:3,
+    status:'Watch',
+    earlyWarning:'Survey results returned with 60%+ demand for a specific feature',
+    budget:'Change budget to be used if RFC approved',
+    secondary:'Scope addition may affect Stage 2 timeline if large.',
+    eyebrow:'Opportunity · R-010',
+    notes:'Survey returns expected Stage 2 Wk 8. PM monitoring.',
+  },
+];
+
+// ── RISK CYCLE STEPS ──────────────────────────────────────────────────────
+const CYCLE_STEPS = [
+  {
+    id:'identify', label:'Identify', angle: 270,
+    color:'#818cf8',
+    eyebrow:'Step 1 · Identify',
+    desc:'Risks are identified by anyone at any time. The PM uses structured techniques — workshops, checklists, lessons from previous projects, assumption analysis — to surface threats and opportunities. Both types must be considered.',
+    rule:'Every identified risk goes straight into the Risk Register, regardless of how small it seems. Unlogged risks are unmanaged risks.',
+    bullets:[
+      'Threat — something that could negatively affect the project',
+      'Opportunity — something that could positively affect the project',
+      'Use prompt lists: PESTLE, SWOT, assumptions log, lessons learned',
+      'Anyone can identify a risk — not just the PM',
+    ],
+    mistakes:[
+      {title:'Only identifying threats',body:'PRINCE2 explicitly defines risk as uncertainty — positive or negative. Teams that only think negatively miss opportunities that could accelerate delivery or reduce cost.'},
+      {title:'Identifying risks only at initiation',body:'Risks emerge throughout the project. Identification is a continuous activity — every Checkpoint and stage boundary must include a fresh look.'},
+    ],
+  },
+  {
+    id:'assess', label:'Assess', angle: 342,
+    color:'#f59e0b',
+    eyebrow:'Step 2 · Assess',
+    desc:'Each risk is assessed on two dimensions: probability (how likely?) and impact (how severe if it happens?). PRINCE2 also considers proximity (when might it materialise?) and the overall risk exposure across the project.',
+    rule:'Assessment is always relative to the project\'s objectives. A risk with high probability but negligible impact may warrant less attention than a low-probability catastrophic threat.',
+    bullets:[
+      'Probability: Very Low / Low / Medium / High / Very High',
+      'Impact: assess against each of the six tolerances',
+      'Proximity: which stage or time window is most exposed?',
+      'Risk exposure = Probability × Impact (used to prioritise)',
+      'Reassess after every response is planned — residual risk',
+    ],
+    mistakes:[
+      {title:'Only assessing cost impact',body:'Impact must be assessed against all six tolerances: time, cost, scope, quality, risk, and benefits. A zero-cost risk can still destroy the project.'},
+      {title:'Never revisiting assessments',body:'A risk assessed as Low at initiation may become Critical by Stage 2. Probability and impact must be re-evaluated at every review cycle.'},
+    ],
+  },
+  {
+    id:'plan', label:'Plan', angle: 54,
+    color:'#f472b6',
+    eyebrow:'Step 3 · Plan Responses',
+    desc:'For every assessed risk, a response is planned. PRINCE2 defines distinct response types for threats and opportunities. The response must be proportionate to the risk exposure — over-engineering a response to a minor risk wastes budget.',
+    rule:'Every response must be affordable, achievable, and assigned to a named actionee. A response with no owner will never be implemented.',
+    bullets:[
+      'Threats: Avoid · Reduce · Transfer · Accept (+ fallback)',
+      'Opportunities: Exploit · Enhance · Share · Reject',
+      'Residual risk: what remains after the response is applied?',
+      'Secondary risk: does the response create a new risk?',
+      'Risk budget: responses cost money — budget must be allocated',
+    ],
+    mistakes:[
+      {title:'"Accept" as the default',body:'Accepting a risk should be a conscious decision with a fallback plan — not the default response because nobody has time to think about it.'},
+      {title:'No secondary risk assessment',body:'Risk responses can create new risks. Accelerating delivery to avoid a deadline risk may introduce a quality threat. Secondary risks must be logged.'},
+    ],
+  },
+  {
+    id:'implement', label:'Implement', angle: 126,
+    color:'#34d399',
+    eyebrow:'Step 4 · Implement',
+    desc:'The planned responses are actively carried out by the actionee. The risk owner monitors that the response is being implemented effectively. Implementation is not the end — the risk must continue to be watched for signs it is materialising despite the response.',
+    rule:'The risk owner is accountable for ensuring the response is implemented. The actionee does the work. They are often different people.',
+    bullets:[
+      'Risk owner = accountable for the risk and its management',
+      'Actionee = responsible for carrying out the response actions',
+      'Monitor early warning indicators at every checkpoint',
+      'If a risk materialises, it becomes an issue — log in Issue Register',
+      'Residual risk remains in the Risk Register after response is in place',
+    ],
+    mistakes:[
+      {title:'Confusing risk owner with actionee',body:'The risk owner is accountable for ensuring the risk is managed. The actionee does the actual response work. Blurring this distinction means nobody takes clear accountability.'},
+      {title:'Treating a materialised risk as still theoretical',body:'When a risk materialises it becomes an issue and must be moved to the Issue Register. Leaving materialised events in the Risk Register delays the escalation response.'},
+    ],
+  },
+  {
+    id:'communicate', label:'Communicate', angle: 198,
+    color:'#38bdf8',
+    eyebrow:'Step 5 · Communicate',
+    desc:'Risk information flows throughout the project at every level. Checkpoint Reports include risk updates from Team Managers. Highlight Reports summarise risk status for the Project Board. End Stage Reports include a full risk review. The Risk Register is never a private PM document.',
+    rule:'The Project Board must receive a risk summary at every Highlight Report and End Stage Review. Surprises at stage end are a communication failure.',
+    bullets:[
+      'Team Manager → PM: risk updates in Checkpoint Reports',
+      'PM → Project Board: risk summary in Highlight Reports',
+      'PM → Project Board: full risk review in End Stage Reports',
+      'PM → Corporate: escalation if risk threatens Business Case',
+      'Risk Register visible to all team members, not just the PM',
+    ],
+    mistakes:[
+      {title:'Risk Register kept private by the PM',body:'The Risk Register is a project management tool shared across the team. Keeping it private means team members cannot flag early warnings and risk owners cannot see the full picture.'},
+      {title:'No risk section in Highlight Reports',body:'A Highlight Report with no risk update gives the Project Board an incomplete picture. Even "no change" should be explicitly stated.'},
+    ],
+  },
+];
+
+// ── RESPONSE TYPES ────────────────────────────────────────────────────────
+const RESPONSES = [
+  {
+    name:'Avoid', applies:'Threat', color:'#ef4444',
+    eyebrow:'Threat Response · Avoid',
+    desc:'Change the plan to eliminate the threat entirely. Remove the cause, change the approach, or descope the element that carries the risk.',
+    bullets:['Strongest possible response — removes the risk entirely','May require scope or approach change','Only feasible when the threat can be cleanly eliminated','Example: switching to a proven technology to avoid an untested one'],
+    when:'Use when the threat is high impact and the avoidance action is affordable.',
+  },
+  {
+    name:'Reduce', applies:'Threat', color:'#fb923c',
+    eyebrow:'Threat Response · Reduce',
+    desc:'Take action to lower either the probability or the impact of the threat, or both. The risk remains but at an acceptable level.',
+    bullets:['Most commonly used threat response','Can target probability (less likely to happen) or impact (less severe if it does)','Prototyping, testing, early involvement of experts all reduce probability','Fallback plans, redundancy, and contingency reduce impact'],
+    when:'Use when the threat cannot be avoided but can be made manageable.',
+  },
+  {
+    name:'Transfer', applies:'Threat', color:'#f59e0b',
+    eyebrow:'Threat Response · Transfer',
+    desc:'Move the financial impact of the risk to a third party — typically through insurance, fixed-price contracts, or penalty clauses. The risk still exists but the organisation\'s exposure is capped.',
+    bullets:['Does not eliminate the threat — only the financial consequence','Fixed-price contracts transfer cost risk to the supplier','Insurance transfers risk of specific events (data breach, hardware failure)','The third party takes on the risk in exchange for a premium'],
+    when:'Use for financial or operational risks that a third party can absorb more efficiently.',
+  },
+  {
+    name:'Accept', applies:'Threat', color:'#818cf8',
+    eyebrow:'Threat Response · Accept',
+    desc:'Acknowledge the risk exists and decide not to take any proactive action. This is valid — but only as a conscious, documented decision with a fallback plan. It is not the same as ignoring the risk.',
+    bullets:['Must be a deliberate, recorded decision — not the default','Requires a fallback / contingency plan for if the risk materialises','Risk budget should cover the fallback cost','Regularly monitored — probability or impact may change'],
+    when:'Use when the cost of any response exceeds the expected cost of the risk itself.',
+  },
+  {
+    name:'Exploit', applies:'Opportunity', color:'#34d399',
+    eyebrow:'Opportunity Response · Exploit',
+    desc:'Take action to ensure the opportunity definitely happens. Remove the uncertainty — turn the possibility into a certainty.',
+    bullets:['The strongest opportunity response','Invest actively in making the opportunity occur','Example: assign a dedicated resource to guarantee an early delivery','Often involves committing budget or time in advance'],
+    when:'Use when the opportunity is high value and can be secured with affordable investment.',
+  },
+  {
+    name:'Enhance', applies:'Opportunity', color:'#6ee7b7',
+    eyebrow:'Opportunity Response · Enhance',
+    desc:'Increase the probability of the opportunity occurring, or increase the positive impact if it does. The opportunity may still not happen — but the conditions are made more favourable.',
+    bullets:['Increases likelihood or magnitude of the benefit','Less commitment than Exploit — actions are enabling, not guaranteeing','Example: brief a supplier on an opportunity so they can prepare','Often low-cost compared to the potential upside'],
+    when:'Use when fully exploiting is too costly but the opportunity is still worth encouraging.',
+  },
+  {
+    name:'Share', applies:'Opportunity', color:'#818cf8',
+    eyebrow:'Opportunity Response · Share',
+    desc:'Involve a third party who can help the opportunity materialise, sharing both the effort and the benefit. Often used when another organisation has capability or resource that the project lacks.',
+    bullets:['Involves a partner organisation or other business unit','Benefit is shared in proportion to the contribution','Requires formal agreement on who does what and receives what','Example: joint platform development shared across two business units'],
+    when:'Use when the opportunity is large but requires capability the project does not have alone.',
+  },
+  {
+    name:'Reject', applies:'Opportunity', color:'#4a5878',
+    eyebrow:'Opportunity Response · Reject',
+    desc:'Decide not to pursue the opportunity. This may be because pursuing it would distract from the core project objectives, or because the cost of exploitation exceeds the potential benefit.',
+    bullets:['Conscious decision to leave the opportunity untaken','Record the decision and rationale in the Risk Register','Do not confuse with "didn\'t notice it" — rejection is deliberate','Review at next stage boundary in case circumstances change'],
+    when:'Use when the opportunity is too marginal, too distracting, or too costly to pursue.',
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VIEW SWITCHING
+// ═══════════════════════════════════════════════════════════════════════════
+let currentView = 'heatmap';
+document.getElementById('toolbar').addEventListener('click', e => {
+  const btn = e.target.closest('.view-tab');
+  if (!btn) return;
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  currentView = btn.dataset.view;
+  ['heatmap','register','cycle'].forEach(v => {
+    document.getElementById('view-'+v).style.display = v===currentView ? '' : 'none';
+  });
+  closePanel();
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HEAT MAP
+// ═══════════════════════════════════════════════════════════════════════════
+function renderHeatmap() {
+  const container = document.getElementById('view-heatmap');
+  container.innerHTML = `
+    <div class="heatmap-legend">
+      <div class="hm-leg"><div class="hm-dot" style="background:#fb923c"></div>Threat</div>
+      <div class="hm-leg"><div class="hm-dot" style="background:#34d399"></div>Opportunity</div>
+      <div class="hm-leg"><div class="hm-dot" style="background:rgba(251,146,60,0.35);border:1px solid rgba(251,146,60,0.6)"></div>Active</div>
+      <div class="hm-leg"><div class="hm-dot" style="background:rgba(251,146,60,0.1);border:1px solid rgba(251,146,60,0.25)"></div>Watch</div>
+    </div>
+    <div class="section-heading">Probability / Impact Matrix <span>· tap any risk bubble</span></div>
+    <div class="heatmap-wrap"><svg class="hm-svg" id="hmSvg"></svg></div>
+    <div class="profile-section">
+      <div class="section-heading">Risk profile summary <span>· Customer Portal · Stage 2</span></div>
+      <div class="profile-bars">
+        <div class="pb-row"><div class="pb-label">Critical</div><div class="pb-track"><div class="pb-fill" style="width:0%;background:rgba(239,68,68,0.6)" id="pb-crit"></div></div><div class="pb-val" id="pv-crit">0</div></div>
+        <div class="pb-row"><div class="pb-label">High</div><div class="pb-track"><div class="pb-fill" style="width:0%;background:rgba(251,146,60,0.6)" id="pb-high"></div></div><div class="pb-val" id="pv-high">0</div></div>
+        <div class="pb-row"><div class="pb-label">Medium</div><div class="pb-track"><div class="pb-fill" style="width:0%;background:rgba(245,158,11,0.6)" id="pb-med"></div></div><div class="pb-val" id="pv-med">0</div></div>
+        <div class="pb-row"><div class="pb-label">Low</div><div class="pb-track"><div class="pb-fill" style="width:0%;background:rgba(52,211,153,0.5)" id="pb-low"></div></div><div class="pb-val" id="pv-low">0</div></div>
+        <div class="pb-row"><div class="pb-label">Opportunities</div><div class="pb-track"><div class="pb-fill" style="width:0%;background:rgba(52,211,153,0.35)" id="pb-opp"></div></div><div class="pb-val" id="pv-opp">0</div></div>
+      </div>
+    </div>`;
+
+  const ns  = 'http://www.w3.org/2000/svg';
+  const svg = document.getElementById('hmSvg');
+
+  // Larger cells so multiple risks fit cleanly
+  const CELL = 82, COLS = 5, ROWS = 5;
+  const PAD_L = 58, PAD_T = 10, PAD_B = 28, PAD_R = 10;
+  const W = PAD_L + COLS*CELL + PAD_R;
+  const H = PAD_T + ROWS*CELL + PAD_B;
+
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width',  W);
+  svg.setAttribute('height', H);
+  svg.style.maxWidth = '100%';
+
+  const el = (tag, attrs={}) => {
+    const e = document.createElementNS(ns, tag);
+    Object.entries(attrs).forEach(([k,v]) => e.setAttribute(k,v));
+    return e;
+  };
+
+  // Zone colour by probability × impact score
+  const zoneColor = (col, row) => {
+    const s = (col+1)*(row+1);
+    if (s >= 15) return 'rgba(239,68,68,0.16)';
+    if (s >= 9)  return 'rgba(251,146,60,0.13)';
+    if (s >= 4)  return 'rgba(245,158,11,0.10)';
+    return 'rgba(52,211,153,0.07)';
+  };
+
+  // Draw grid cells
+  for (let r=0; r<ROWS; r++) {
+    for (let c=0; c<COLS; c++) {
+      const x = PAD_L + c*CELL;
+      const y = PAD_T + (ROWS-1-r)*CELL;
+      svg.appendChild(el('rect',{x,y,width:CELL,height:CELL,
+        fill:zoneColor(c,r), stroke:'rgba(80,120,220,0.07)', 'stroke-width':'0.5'}));
+    }
+  }
+
+  // Axis labels — probability (x) and impact (y)
+  const labels = ['Very Low','Low','Medium','High','Very High'];
+  labels.forEach((lbl,i) => {
+    // X axis
+    const tx = el('text',{
+      x: PAD_L + i*CELL + CELL/2,
+      y: PAD_T + ROWS*CELL + 16,
+      'font-size':'6.5', 'font-family':'DM Mono,monospace',
+      fill:'rgba(80,120,220,0.4)', 'text-anchor':'middle', 'dominant-baseline':'middle'
+    });
+    tx.textContent = lbl; svg.appendChild(tx);
+
+    // Y axis
+    const ty = el('text',{
+      x: PAD_L - 8,
+      y: PAD_T + (ROWS-1-i)*CELL + CELL/2,
+      'font-size':'6.5', 'font-family':'DM Mono,monospace',
+      fill:'rgba(80,120,220,0.4)', 'text-anchor':'end', 'dominant-baseline':'middle'
+    });
+    ty.textContent = lbl; svg.appendChild(ty);
+  });
+
+  // Axis titles
+  const xt = el('text',{x: PAD_L+COLS*CELL/2, y: H-2,
+    'font-size':'6','font-family':'DM Mono,monospace',
+    fill:'rgba(80,120,220,0.22)','text-anchor':'middle'});
+  xt.textContent = 'PROBABILITY →'; svg.appendChild(xt);
+
+  const yt = el('text',{x:7, y: PAD_T+ROWS*CELL/2,
+    'font-size':'6','font-family':'DM Mono,monospace',
+    fill:'rgba(80,120,220,0.22)','text-anchor':'middle',
+    transform:`rotate(-90,7,${PAD_T+ROWS*CELL/2})`});
+  yt.textContent = '← IMPACT'; svg.appendChild(yt);
+
+  // ── Plot risks using a sub-grid layout within each cell ──────────────────
+  // Bucket risks by (prob, impact) cell
+  const buckets = {};
+  RISKS.forEach(risk => {
+    const key = `${risk.prob-1}-${risk.impact-1}`;
+    if (!buckets[key]) buckets[key] = [];
+    buckets[key].push(risk);
+  });
+
+  // For each cell, lay risks out in a neat sub-grid (max 2 columns)
+  // Bubble radius
+  const BR = 16;
+  // Sub-grid offsets for up to 4 risks per cell: positions relative to cell centre
+  const subGridOffsets = [
+    [[0, 0]],                                      // 1 risk: centred
+    [[-BR, 0], [BR, 0]],                           // 2 risks: side by side
+    [[-BR, -BR/2], [BR, -BR/2], [0, BR/2+2]],     // 3 risks: triangle
+    [[-BR, -BR], [BR, -BR], [-BR, BR], [BR, BR]], // 4 risks: 2×2
+  ];
+
+  Object.entries(buckets).forEach(([key, risks]) => {
+    const [c, r] = key.split('-').map(Number);
+    const cellX  = PAD_L + c*CELL + CELL/2;
+    const cellY  = PAD_T + (ROWS-1-r)*CELL + CELL/2;
+    const n      = risks.length;
+    const offsets = subGridOffsets[Math.min(n,4)-1];
+
+    risks.forEach((risk, j) => {
+      const [ox, oy] = offsets[Math.min(j, offsets.length-1)];
+      const cx = cellX + ox;
+      const cy = cellY + oy;
+      const isActive = risk.status === 'Active';
+      const isOppty  = risk.type   === 'Opportunity';
+      const color    = isOppty ? '#34d399' : '#fb923c';
+
+      const g = document.createElementNS(ns,'g');
+      g.classList.add('risk-bubble');
+      g.style.cursor = 'pointer';
+      g.style.opacity = '0';
+      g.style.animation = `fadeNode 0.35s ease ${j*0.05}s forwards`;
+
+      // Outer ring for active risks
+      if (isActive) {
+        const ring = el('circle',{cx,cy,r:BR+3,
+          fill:'none', stroke:color+'30', 'stroke-width':'1.5'});
+        g.appendChild(ring);
+      }
+
+      const circle = el('circle',{cx,cy,r:BR,
+        fill: color+(isActive?'28':'12'),
+        stroke: color+(isActive?'88':'45'),
+        'stroke-width': isActive?'1.5':'1'});
+      circle.classList.add('rb-circle');
+      g.appendChild(circle);
+
+      // ID label — two lines: "R-001" as "R01" to fit
+      const shortId = risk.id.replace('R-0','R').replace('R-','R');
+      const lbl = el('text',{x:cx, y:cy,
+        'font-size':'7.5', 'font-family':'DM Mono,monospace',
+        fill:color, 'text-anchor':'middle', 'dominant-baseline':'middle',
+        'font-weight':'500'});
+      lbl.textContent = shortId;
+      g.appendChild(lbl);
+
+      g.addEventListener('click', ev => { ev.stopPropagation(); openRiskPanel(risk); });
+      svg.appendChild(g);
+    });
+  });
+
+  // Profile bars
+  const threats = RISKS.filter(r=>r.type==='Threat');
+  const oppts   = RISKS.filter(r=>r.type==='Opportunity');
+  const score   = r => r.prob * r.impact;
+  const crit = threats.filter(r=>score(r)>=15).length;
+  const high = threats.filter(r=>score(r)>=9&&score(r)<15).length;
+  const med  = threats.filter(r=>score(r)>=4&&score(r)<9).length;
+  const low  = threats.filter(r=>score(r)<4).length;
+  const maxN = Math.max(crit,high,med,low,oppts.length,1);
+  setTimeout(() => {
+    document.getElementById('pb-crit').style.width = (crit/maxN*100)+'%';
+    document.getElementById('pv-crit').textContent = crit;
+    document.getElementById('pb-high').style.width = (high/maxN*100)+'%';
+    document.getElementById('pv-high').textContent = high;
+    document.getElementById('pb-med').style.width  = (med/maxN*100)+'%';
+    document.getElementById('pv-med').textContent  = med;
+    document.getElementById('pb-low').style.width  = (low/maxN*100)+'%';
+    document.getElementById('pv-low').textContent  = low;
+    document.getElementById('pb-opp').style.width  = (oppts.length/maxN*100)+'%';
+    document.getElementById('pv-opp').textContent  = oppts.length;
+  }, 400);
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RISK REGISTER
+// ═══════════════════════════════════════════════════════════════════════════
+const RESP_COLORS = {
+  Reduce:'#fb923c',Avoid:'#ef4444',Transfer:'#f59e0b','Accept (contingency)':'#818cf8',
+  Exploit:'#34d399',Enhance:'#6ee7b7',Share:'#818cf8',Reject:'#4a5878',
+};
+const STATUS_COLORS = { Active:'#fb923c', Watch:'#f59e0b', Closed:'#2e3a52' };
+
+function probPips(val, color) {
+  return `<span class="prob-bar">${[1,2,3,4,5].map(i=>
+    `<span class="prob-pip" style="background:${i<=val?color+'99':'rgba(255,255,255,0.06)'}"></span>`
+  ).join('')}</span>`;
+}
+
+function renderRegister(filter='all') {
+  const container = document.getElementById('view-register');
+  container.innerHTML = `
+    <div class="section-heading">Risk Register <span>· Customer Portal Modernisation · Stage 2</span></div>
+    <div class="register-controls" id="regControls">
+      <button class="filter-btn ${filter==='all'?'active':''}" data-filter="all">All risks</button>
+      <button class="filter-btn ${filter==='Threat'?'active':''}" data-filter="Threat">Threats</button>
+      <button class="filter-btn ${filter==='Opportunity'?'active':''}" data-filter="Opportunity">Opportunities</button>
+      <button class="filter-btn ${filter==='Active'?'active':''}" data-filter="Active">Active</button>
+    </div>
+    <div class="register-table-wrap">
+      <table class="register-table">
+        <thead><tr>
+          <th>ID</th><th>Type</th><th>Risk</th><th>Prob</th><th>Impact</th>
+          <th>Response</th><th>Owner</th><th>Status</th>
+        </tr></thead>
+        <tbody id="regBody"></tbody>
+      </table>
+    </div>`;
+
+  document.getElementById('regControls').addEventListener('click', e => {
+    const btn = e.target.closest('.filter-btn');
+    if (!btn) return;
+    renderRegister(btn.dataset.filter);
+    closePanel();
+  });
+
+  let rows = RISKS;
+  if (filter==='Threat') rows = RISKS.filter(r=>r.type==='Threat');
+  else if (filter==='Opportunity') rows = RISKS.filter(r=>r.type==='Opportunity');
+  else if (filter==='Active') rows = RISKS.filter(r=>r.status==='Active');
+
+  const body = document.getElementById('regBody');
+  body.innerHTML = rows.map(risk => {
+    const tc = risk.type==='Threat' ? '#fb923c' : '#34d399';
+    const sc = STATUS_COLORS[risk.status] || '#4a5878';
+    const rc = RESP_COLORS[risk.response] || '#818cf8';
+    return `<tr data-id="${risk.id}">
+      <td style="color:var(--text-dim);white-space:nowrap">${risk.id}</td>
+      <td><span class="type-badge" style="color:${tc};border-color:${tc}44">${risk.type}</span></td>
+      <td style="color:var(--text-bright);max-width:180px">${risk.title}</td>
+      <td>${probPips(risk.prob,'#fb923c')}</td>
+      <td>${probPips(risk.impact,'#818cf8')}</td>
+      <td><span class="resp-badge" style="color:${rc};border-color:${rc}44">${risk.response}</span></td>
+      <td>${risk.owner}</td>
+      <td><span class="status-badge" style="color:${sc};border-color:${sc}44">${risk.status}</span></td>
+    </tr>`;
+  }).join('');
+
+  body.querySelectorAll('tr').forEach(tr => {
+    tr.addEventListener('click', () => {
+      body.querySelectorAll('tr').forEach(r=>r.classList.remove('active-row'));
+      tr.classList.add('active-row');
+      openRiskPanel(RISKS.find(r=>r.id===tr.dataset.id));
+    });
+  });
+}
+
+function openRiskPanel(risk) {
+  const tc = risk.type==='Threat' ? '#fb923c' : '#34d399';
+  buildPanel(risk.eyebrow, risk.title, [
+    {id:'detail',   label:'Detail'},
+    {id:'response', label:'Response'},
+    {id:'monitor',  label:'Monitoring'},
+  ], tab => {
+    if (tab==='detail') return `
+      <p class="dp-desc">${risk.desc}</p>
+      <div class="dp-fields">
+        <div><div class="dp-field-label">Type</div><div class="dp-field-val"><span class="type-badge" style="color:${tc};border-color:${tc}44">${risk.type}</span></div></div>
+        <div><div class="dp-field-label">Status</div><div class="dp-field-val">${risk.status}</div></div>
+        <div><div class="dp-field-label">Probability</div><div class="dp-field-val">${probPips(risk.prob,'#fb923c')} ${['','Very Low','Low','Medium','High','Very High'][risk.prob]}</div></div>
+        <div><div class="dp-field-label">Impact</div><div class="dp-field-val">${probPips(risk.impact,'#818cf8')} ${['','Very Low','Low','Medium','High','Very High'][risk.impact]}</div></div>
+        <div><div class="dp-field-label">Proximity</div><div class="dp-field-val">${risk.proximity}</div></div>
+        <div><div class="dp-field-label">Risk owner</div><div class="dp-field-val">${risk.owner}</div></div>
+        <div><div class="dp-field-label">Actionee</div><div class="dp-field-val">${risk.actionee}</div></div>
+        <div><div class="dp-field-label">Budget</div><div class="dp-field-val">${risk.budget}</div></div>
+      </div>
+      <p style="font-size:clamp(0.42rem,1.5vw,0.54rem);color:var(--text-dim);margin-top:0.3rem;font-style:italic">${risk.notes}</p>`;
+    if (tab==='response') return `
+      <div class="dp-rule">${risk.responseDetail}</div>
+      <div class="dp-fields">
+        <div><div class="dp-field-label">Response type</div><div class="dp-field-val">${risk.response}</div></div>
+        <div><div class="dp-field-label">Actionee</div><div class="dp-field-val">${risk.actionee}</div></div>
+        <div><div class="dp-field-label">Residual prob.</div><div class="dp-field-val">${probPips(risk.residualProb,'#fb923c')}</div></div>
+        <div><div class="dp-field-label">Residual impact</div><div class="dp-field-val">${probPips(risk.residualImpact,'#818cf8')}</div></div>
+      </div>
+      ${risk.secondary ? `<div class="dp-field-label" style="margin-top:0.4rem">Secondary risk</div><p class="dp-desc" style="margin-top:3px;color:rgba(251,146,60,0.5)">${risk.secondary}</p>` : ''}`;
+    if (tab==='monitor') return `
+      <div class="dp-field-label">Early warning indicator</div>
+      <p class="dp-desc" style="margin-top:3px">${risk.earlyWarning}</p>
+      <div class="dp-field-label" style="margin-top:0.5rem">Review notes</div>
+      <p class="dp-desc" style="margin-top:3px">${risk.notes}</p>`;
+    return '';
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RISK CYCLE
+// ═══════════════════════════════════════════════════════════════════════════
+function renderCycle() {
+  const container = document.getElementById('view-cycle');
+  container.innerHTML = `
+    <div class="section-heading">The PRINCE2 Risk Management Cycle <span>· tap any step</span></div>
+    <div class="cycle-wrap"><svg class="cycle-svg" id="cycleSvg"></svg></div>
+    <div class="section-heading" style="margin-top:1.2rem">Risk response types <span>· tap to explore</span></div>
+    <div class="response-grid" id="respGrid"></div>`;
+
+  const ns  = 'http://www.w3.org/2000/svg';
+  const svg = document.getElementById('cycleSvg');
+
+  // Canvas
+  const W = 460, H = 420;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width', W);
+  svg.setAttribute('height', H);
+  svg.style.maxWidth = '100%';
+
+  // Node dimensions
+  const NW = 110, NH = 40;
+  const hw = NW/2, hh = NH/2;
+
+  // Fixed node centres — pentagon laid out manually so arrows are clean
+  //           Identify (top-centre)
+  //   Communicate (left)       Assess (right)
+  //     Implement (bottom-left)    Plan (bottom-right)
+  const nodes = {
+    identify:    { x:230, y: 50 },
+    assess:      { x:390, y:155 },
+    plan:        { x:340, y:320 },
+    implement:   { x:120, y:320 },
+    communicate: { x: 70, y:155 },
+  };
+
+  // Arrow connections: [from, exitSide, to, enterSide]
+  // exitSide / enterSide: 'top'|'right'|'bottom'|'left'
+  const connections = [
+    ['identify',    'right',  'assess',      'top'   ],
+    ['assess',      'bottom', 'plan',        'right' ],
+    ['plan',        'left',   'implement',   'bottom'],
+    ['implement',   'top',    'communicate', 'bottom'],
+    ['communicate', 'top',    'identify',    'left'  ],
+  ];
+
+  // Step data in order for colours
+  const stepOrder = ['identify','assess','plan','implement','communicate'];
+  const stepColors = {};
+  CYCLE_STEPS.forEach(s => { stepColors[s.id] = s.color; });
+
+  // Helper: get anchor point on node edge
+  function anchor(id, side) {
+    const n = nodes[id];
+    if (side==='top')    return [n.x,       n.y - hh];
+    if (side==='bottom') return [n.x,       n.y + hh];
+    if (side==='left')   return [n.x - hw,  n.y];
+    if (side==='right')  return [n.x + hw,  n.y];
+  }
+
+  // Helper: create SVG element
+  const el = (tag, attrs) => {
+    const e = document.createElementNS(ns, tag);
+    Object.entries(attrs).forEach(([k,v]) => e.setAttribute(k,v));
+    return e;
+  };
+
+  // Defs — one arrowhead per connection colour
+  const defs = document.createElementNS(ns,'defs');
+  connections.forEach(([from], i) => {
+    const color = stepColors[from] || '#b0c0ff';
+    const m = document.createElementNS(ns,'marker');
+    m.setAttribute('id',`arr${i}`);
+    m.setAttribute('markerWidth','8'); m.setAttribute('markerHeight','8');
+    m.setAttribute('refX','7'); m.setAttribute('refY','3.5');
+    m.setAttribute('orient','auto');
+    const p = document.createElementNS(ns,'polygon');
+    p.setAttribute('points','0 0,8 3.5,0 7');
+    p.setAttribute('fill', color+'99');
+    m.appendChild(p); defs.appendChild(m);
+  });
+  svg.appendChild(defs);
+
+  // Draw connections FIRST (under nodes)
+  connections.forEach(([from, exitSide, to, enterSide], i) => {
+    const color = stepColors[from] || '#b0c0ff';
+    const [x1, y1] = anchor(from, exitSide);
+    const [x2, y2] = anchor(to,   enterSide);
+
+    // Build an L-shaped or S-shaped path using two cubic bezier control points
+    // Control points extend from each anchor in the direction of that side
+    const CTRL = 55; // how far control points extend
+    const dirOffset = side => {
+      if (side==='top')    return [0, -CTRL];
+      if (side==='bottom') return [0,  CTRL];
+      if (side==='left')   return [-CTRL, 0];
+      if (side==='right')  return [ CTRL, 0];
+      return [0,0];
+    };
+    const [cx1o, cy1o] = dirOffset(exitSide);
+    const [cx2o, cy2o] = dirOffset(enterSide);
+    const cx1 = x1 + cx1o, cy1 = y1 + cy1o;
+    const cx2 = x2 + cx2o, cy2 = y2 + cy2o;
+
+    const path = el('path', {
+      d: `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`,
+      fill: 'none',
+      stroke: color + '60',
+      'stroke-width': '1.5',
+      'marker-end': `url(#arr${i})`
+    });
+    svg.appendChild(path);
+  });
+
+  // Draw nodes ON TOP
+  CYCLE_STEPS.forEach((step, i) => {
+    const n = nodes[step.id];
+    if (!n) return;
+
+    const g = document.createElementNS(ns,'g');
+    g.classList.add('cycle-step');
+    g.style.cursor   = 'pointer';
+    g.style.opacity  = '0';
+    g.style.animation = `fadeNode 0.4s ease ${i*0.09}s forwards`;
+
+    g.appendChild(el('rect', {
+      x: n.x - hw, y: n.y - hh,
+      width: NW, height: NH,
+      rx:'5', ry:'5',
+      fill:   step.color + '1e',
+      stroke: step.color + '70',
+      'stroke-width': '1'
+    }));
+
+    const t1 = document.createElementNS(ns,'text');
+    t1.setAttribute('x', n.x); t1.setAttribute('y', n.y - 6);
+    t1.setAttribute('font-size','9.5');
+    t1.setAttribute('font-family','DM Mono,monospace');
+    t1.setAttribute('text-anchor','middle');
+    t1.setAttribute('dominant-baseline','middle');
+    t1.setAttribute('fill', step.color);
+    t1.setAttribute('font-weight','500');
+    t1.textContent = step.label;
+    g.appendChild(t1);
+
+    const t2 = document.createElementNS(ns,'text');
+    t2.setAttribute('x', n.x); t2.setAttribute('y', n.y + 8);
+    t2.setAttribute('font-size','6.5');
+    t2.setAttribute('font-family','DM Mono,monospace');
+    t2.setAttribute('text-anchor','middle');
+    t2.setAttribute('dominant-baseline','middle');
+    t2.setAttribute('fill','rgba(255,255,255,0.22)');
+    t2.textContent = `Step ${i+1}`;
+    g.appendChild(t2);
+
+    g.addEventListener('click', ev => { ev.stopPropagation(); openCyclePanel(step); });
+    svg.appendChild(g);
+  });
+
+  // Centre label
+  const cx = 230, cy = 210;
+  ['CONTINUOUS','CYCLE'].forEach((word, i) => {
+    const t = document.createElementNS(ns,'text');
+    t.setAttribute('x', cx); t.setAttribute('y', cy + (i===0 ? -8 : 8));
+    t.setAttribute('font-size','7.5');
+    t.setAttribute('font-family','DM Mono,monospace');
+    t.setAttribute('text-anchor','middle');
+    t.setAttribute('dominant-baseline','middle');
+    t.setAttribute('fill','rgba(251,146,60,0.18)');
+    t.setAttribute('letter-spacing','2');
+    t.textContent = word;
+    svg.appendChild(t);
+  });
+
+  // Response type cards
+  const grid = document.getElementById('respGrid');
+  grid.innerHTML = RESPONSES.map((resp,i) => `
+    <div class="resp-card" data-resp="${resp.name}" style="animation-delay:${i*0.04}s">
+      <div class="resp-type" style="color:${resp.color}">${resp.applies}</div>
+      <div class="resp-name">${resp.name}</div>
+      <div class="resp-applies">tap to explore</div>
+    </div>`).join('');
+
+  grid.querySelectorAll('.resp-card').forEach(card => {
+    card.addEventListener('click', () => {
+      grid.querySelectorAll('.resp-card').forEach(c=>c.classList.remove('active'));
+      card.classList.add('active');
+      openRespPanel(RESPONSES.find(r=>r.name===card.dataset.resp));
+    });
+  });
+}
+
+
+function openCyclePanel(step) {
+  buildPanel(step.eyebrow, step.label, [
+    {id:'what',     label:'What happens'},
+    {id:'pitfalls', label:'Pitfalls'},
+  ], tab => {
+    if (tab==='what') return `
+      <p class="dp-rule">${step.rule}</p>
+      <ul class="dp-list">${step.bullets.map(b=>`<li>${b}</li>`).join('')}</ul>`;
+    if (tab==='pitfalls') return step.mistakes.map(m=>
+      `<div class="dp-mistake"><strong>⚠ ${m.title}</strong><p>${m.body}</p></div>`).join('');
+    return '';
+  });
+}
+
+function openRespPanel(resp) {
+  buildPanel(resp.eyebrow, resp.name, [
+    {id:'how', label:'How it works'},
+  ], tab => `
+    <p class="dp-desc">${resp.desc}</p>
+    <ul class="dp-list">${resp.bullets.map(b=>`<li>${b}</li>`).join('')}</ul>
+    <p class="dp-rule" style="margin-top:0.5rem">When to use: ${resp.when}</p>`
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GENERIC PANEL
+// ═══════════════════════════════════════════════════════════════════════════
+function buildPanel(eyebrow, title, tabs, renderer) {
+  document.getElementById('dpEyebrow').textContent = eyebrow;
+  document.getElementById('dpTitle').textContent   = title;
+  const tabsEl = document.getElementById('dpTabs');
+  tabsEl.innerHTML = tabs.map((t,i)=>
+    `<button class="dp-tab${i===0?' active':''}" data-tab="${t.id}">${t.label}</button>`
+  ).join('');
+  tabsEl.querySelectorAll('.dp-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabsEl.querySelectorAll('.dp-tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('dpBody').innerHTML = renderer(btn.dataset.tab);
+    });
+  });
+  document.getElementById('dpBody').innerHTML = renderer(tabs[0].id);
+  document.getElementById('detailPanel').classList.add('visible');
+}
+
+function closePanel() {
+  document.getElementById('detailPanel').classList.remove('visible');
+  document.querySelectorAll('.risk-bubble,.cycle-step,.resp-card').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.active-row').forEach(n=>n.classList.remove('active-row'));
+}
+
+document.getElementById('dpClose').addEventListener('click', closePanel);
+document.getElementById('mainWrap').addEventListener('click', closePanel);
+
+// ── CSS anim for SVG nodes ────
+const style = document.createElement('style');
+style.textContent = `@keyframes fadeNode { from{opacity:0;transform:scale(0.85)} to{opacity:1;transform:scale(1)} }`;
+document.head.appendChild(style);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════════
+renderHeatmap();
+renderRegister('all');
+renderCycle();
+</script>
+</body>
+</html>

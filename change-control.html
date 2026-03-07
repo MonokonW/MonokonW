@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PRINCE2 · Change Control</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
+
+:root {
+  --bg:         #090c12;
+  --grid-line:  rgba(80,110,180,0.035);
+  --pink:       #f472b6;
+  --pink-dim:   rgba(244,114,182,0.10);
+  --pink-glow:  rgba(244,114,182,0.05);
+  --border-sub: rgba(80,120,220,0.10);
+  --border-mid: rgba(80,120,220,0.18);
+  --text-dim:   #2e3a52;
+  --text-mid:   #4a5878;
+  --text-body:  #6a7a98;
+  --text-bright:#b0bcd0;
+  --panel-bg:   #0d1120;
+
+  /* Issue type colours */
+  --c-rfc:      #f472b6;
+  --c-offspec:  #fb923c;
+  --c-concern:  #818cf8;
+
+  /* Status colours */
+  --s-new:      #4a5878;
+  --s-assess:   #818cf8;
+  --s-escalate: #fb923c;
+  --s-approved: #34d399;
+  --s-rejected: #ef4444;
+  --s-deferred: #f59e0b;
+  --s-closed:   #2e3a52;
+}
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html,body { width:100%; height:100%; overflow:hidden; }
+body {
+  background:var(--bg);
+  font-family:'DM Mono',monospace;
+  color:var(--text-bright);
+  display:flex; flex-direction:column;
+}
+body::before {
+  content:''; position:fixed; inset:0;
+  background-image:
+    linear-gradient(var(--grid-line) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);
+  background-size:28px 28px;
+  pointer-events:none; z-index:0;
+}
+
+/* ── HEADER ── */
+header {
+  flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  text-align:center;
+  padding:calc(env(safe-area-inset-top,0px) + 10px) 3rem 6px;
+  position:relative; z-index:2;
+}
+.back-link {
+  position:absolute; left:1rem; top:50%; transform:translateY(-50%);
+  display:inline-flex; align-items:center; gap:5px;
+  font-size:clamp(0.36rem,1.4vw,0.48rem); letter-spacing:0.12em;
+  text-transform:uppercase; color:var(--text-dim); text-decoration:none;
+  transition:color 0.2s; white-space:nowrap;
+}
+.back-link:hover { color:var(--pink); }
+.back-link::before { content:'←'; font-size:0.7rem; }
+.header-eyebrow {
+  font-size:clamp(0.38rem,1.4vw,0.46rem); letter-spacing:0.22em;
+  text-transform:uppercase; color:var(--text-dim); margin-bottom:3px;
+}
+header h1 {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(0.72rem,3vw,1rem);
+  letter-spacing:0.18em; text-transform:uppercase; color:var(--text-dim);
+}
+header h1 span { color:var(--pink); opacity:0.8; }
+.header-sub {
+  font-size:clamp(0.36rem,1.4vw,0.46rem); letter-spacing:0.14em;
+  text-transform:uppercase; color:#1e2636; margin-top:3px;
+}
+
+/* ── TOOLBAR ── */
+.toolbar {
+  flex-shrink:0; display:flex; align-items:center; gap:8px;
+  padding:4px 1rem; border-bottom:1px solid var(--border-sub);
+  position:relative; z-index:2; flex-wrap:wrap;
+}
+.view-tab {
+  background:none; border:1px solid var(--border-sub); border-radius:3px;
+  cursor:pointer; font-family:'DM Mono',monospace;
+  font-size:clamp(0.33rem,1.2vw,0.44rem); letter-spacing:0.10em;
+  text-transform:uppercase; color:var(--text-mid); padding:0.2rem 0.6rem;
+  transition:color 0.2s,border-color 0.2s,background 0.2s; white-space:nowrap;
+}
+.view-tab.active {
+  color:var(--pink); border-color:rgba(244,114,182,0.4);
+  background:rgba(244,114,182,0.06);
+}
+
+/* ── MAIN SCROLL ── */
+.main-wrap {
+  flex:1; overflow-y:auto; overflow-x:hidden;
+  position:relative; z-index:1;
+  scrollbar-width:thin; scrollbar-color:#1e2838 transparent;
+  padding:1rem 1rem 6rem;
+}
+.main-wrap::-webkit-scrollbar { width:4px; }
+.main-wrap::-webkit-scrollbar-thumb { background:#1e2838; border-radius:2px; }
+
+/* ── SECTION HEADING ── */
+.section-heading {
+  font-size:clamp(0.34rem,1.3vw,0.46rem); letter-spacing:0.18em;
+  text-transform:uppercase; color:var(--text-dim);
+  margin-bottom:0.7rem; padding-bottom:0.35rem;
+  border-bottom:1px solid var(--border-sub);
+}
+.section-heading span { color:var(--pink); opacity:0.55; }
+
+/* ══════════════════════════════════════════════
+   PROCESS FLOW VIEW
+══════════════════════════════════════════════ */
+#view-process { max-width:860px; margin:0 auto; }
+
+/* Type legend */
+.type-legend {
+  display:flex; flex-wrap:wrap; gap:6px 16px;
+  margin-bottom:1rem;
+}
+.type-pill {
+  display:flex; align-items:center; gap:5px;
+  font-size:clamp(0.34rem,1.2vw,0.44rem); letter-spacing:0.08em;
+  text-transform:uppercase; color:var(--text-mid);
+}
+.type-dot { width:7px; height:7px; border-radius:2px; flex-shrink:0; }
+
+/* Flow canvas */
+.flow-canvas {
+  position:relative; width:100%; overflow-x:auto;
+  scrollbar-width:thin; scrollbar-color:#1e2838 transparent;
+}
+.flow-canvas::-webkit-scrollbar { height:3px; }
+.flow-canvas::-webkit-scrollbar-thumb { background:#1e2838; border-radius:2px; }
+
+svg.flow-svg { display:block; overflow:visible; }
+
+/* Flow nodes */
+.flow-node {
+  cursor:pointer;
+  transition:filter 0.2s;
+}
+.flow-node:hover { filter:brightness(1.25); }
+.flow-node.active .fn-rect { filter:brightness(1.3); }
+
+.fn-rect {
+  rx:5; ry:5; stroke-width:1;
+  transition:filter 0.2s;
+}
+.fn-label {
+  font-family:'DM Mono',monospace; font-weight:500;
+  text-anchor:middle; dominant-baseline:middle;
+  pointer-events:none;
+}
+.fn-sub {
+  font-family:'DM Mono',monospace; font-weight:300;
+  text-anchor:middle; dominant-baseline:middle;
+  pointer-events:none; fill:rgba(255,255,255,0.3);
+}
+
+/* Decision diamond */
+.flow-diamond { cursor:pointer; transition:filter 0.2s; }
+.flow-diamond:hover { filter:brightness(1.25); }
+
+/* Edge arrow */
+.flow-edge { fill:none; }
+.flow-edge-label {
+  font-family:'DM Mono',monospace;
+  dominant-baseline:middle; text-anchor:middle;
+}
+
+/* Animate in */
+.flow-node, .flow-diamond {
+  opacity:0; animation:fadeNode 0.4s ease forwards;
+}
+@keyframes fadeNode { to { opacity:1; } }
+
+/* Budget gauge */
+.budget-section { margin-top:1.2rem; }
+.budget-bar-wrap {
+  display:flex; align-items:center; gap:0.7rem;
+  margin-top:0.45rem;
+}
+.budget-label {
+  font-size:clamp(0.34rem,1.2vw,0.44rem); letter-spacing:0.08em;
+  text-transform:uppercase; color:var(--text-mid); width:100px; flex-shrink:0;
+}
+.budget-track {
+  flex:1; height:10px; background:rgba(255,255,255,0.04);
+  border-radius:5px; overflow:hidden; position:relative;
+}
+.budget-fill {
+  height:100%; border-radius:5px;
+  transition:width 0.6s cubic-bezier(0.22,1,0.36,1);
+}
+.budget-val {
+  font-size:clamp(0.34rem,1.2vw,0.46rem); letter-spacing:0.06em;
+  color:var(--text-mid); width:80px; flex-shrink:0; text-align:right;
+}
+.budget-warn {
+  font-size:clamp(0.32rem,1.1vw,0.42rem); letter-spacing:0.08em;
+  text-transform:uppercase; color:rgba(251,146,60,0.6);
+  margin-top:0.3rem;
+}
+
+/* ══════════════════════════════════════════════
+   ISSUE REGISTER VIEW
+══════════════════════════════════════════════ */
+#view-register { max-width:860px; margin:0 auto; }
+
+.register-controls {
+  display:flex; flex-wrap:wrap; gap:6px; margin-bottom:0.8rem;
+  align-items:center;
+}
+.filter-btn {
+  background:none; border:1px solid var(--border-sub); border-radius:3px;
+  cursor:pointer; font-family:'DM Mono',monospace;
+  font-size:clamp(0.32rem,1.2vw,0.42rem); letter-spacing:0.08em;
+  text-transform:uppercase; color:var(--text-mid); padding:0.18rem 0.5rem;
+  transition:all 0.18s;
+}
+.filter-btn.active { border-color:rgba(244,114,182,0.4); color:var(--pink); background:rgba(244,114,182,0.06); }
+
+.register-table-wrap {
+  overflow-x:auto;
+  scrollbar-width:thin; scrollbar-color:#1e2838 transparent;
+}
+.register-table {
+  width:100%; border-collapse:collapse; min-width:620px;
+}
+.register-table th {
+  text-align:left; padding:0.3rem 0.55rem;
+  font-size:clamp(0.3rem,1.1vw,0.40rem); letter-spacing:0.14em;
+  text-transform:uppercase; color:var(--text-dim);
+  border-bottom:1px solid rgba(244,114,182,0.12);
+  white-space:nowrap;
+}
+.register-table td {
+  padding:0.38rem 0.55rem;
+  font-size:clamp(0.42rem,1.5vw,0.54rem);
+  color:var(--text-body); border-bottom:1px solid rgba(80,120,220,0.05);
+  vertical-align:top; line-height:1.5;
+}
+.register-table tr { cursor:pointer; transition:background 0.18s; }
+.register-table tbody tr:hover { background:rgba(244,114,182,0.03); }
+.register-table tbody tr.active-row { background:rgba(244,114,182,0.06); }
+.register-table tr:last-child td { border-bottom:none; }
+
+/* Type & status badges */
+.type-badge, .status-badge {
+  display:inline-block; font-size:clamp(0.28rem,1vw,0.38rem);
+  letter-spacing:0.08em; text-transform:uppercase;
+  padding:0.1rem 0.35rem; border-radius:999px; border:1px solid currentColor;
+  white-space:nowrap;
+}
+.priority-dot {
+  display:inline-block; width:6px; height:6px; border-radius:50%;
+  margin-right:4px; vertical-align:middle;
+}
+
+/* ══════════════════════════════════════════════
+   CONFIGURATION ITEMS VIEW
+══════════════════════════════════════════════ */
+#view-config { max-width:860px; margin:0 auto; }
+
+.ci-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));
+  gap:10px; margin-top:0.6rem;
+}
+.ci-card {
+  background:rgba(255,255,255,0.02);
+  border:1px solid var(--border-sub);
+  border-radius:5px; padding:0.65rem 0.75rem;
+  cursor:pointer; transition:border-color 0.2s, background 0.2s;
+  animation:fadeUp 0.35s ease forwards; opacity:0;
+}
+.ci-card:hover { border-color:rgba(244,114,182,0.3); background:rgba(244,114,182,0.03); }
+.ci-card.active { border-color:rgba(244,114,182,0.5); background:rgba(244,114,182,0.06); }
+@keyframes fadeUp { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
+
+.ci-id {
+  font-size:clamp(0.3rem,1.1vw,0.4rem); letter-spacing:0.14em;
+  text-transform:uppercase; color:var(--text-dim); margin-bottom:3px;
+}
+.ci-name {
+  font-size:clamp(0.46rem,1.7vw,0.58rem); color:var(--text-bright);
+  margin-bottom:4px; letter-spacing:0.03em;
+}
+.ci-version {
+  display:inline-block; font-size:clamp(0.3rem,1.1vw,0.4rem);
+  letter-spacing:0.08em; text-transform:uppercase;
+  padding:0.08rem 0.32rem; border-radius:3px;
+  background:rgba(244,114,182,0.1); color:rgba(244,114,182,0.6);
+  margin-bottom:5px;
+}
+.ci-status-row {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-top:4px;
+}
+.ci-status {
+  font-size:clamp(0.3rem,1.1vw,0.4rem); letter-spacing:0.08em;
+  text-transform:uppercase; color:var(--text-dim);
+}
+.ci-change-indicator {
+  width:6px; height:6px; border-radius:50%; flex-shrink:0;
+}
+
+/* ── DETAIL PANEL ── */
+.detail-panel {
+  position:fixed; bottom:0; left:0; right:0;
+  background:var(--panel-bg);
+  border-top:1px solid rgba(244,114,182,0.2);
+  transform:translateY(100%);
+  transition:transform 0.32s cubic-bezier(0.32,0.72,0,1);
+  z-index:100; max-height:50vh;
+  display:flex; flex-direction:column;
+}
+.detail-panel.visible { transform:translateY(0); }
+.dp-head {
+  display:flex; align-items:flex-start; justify-content:space-between;
+  padding:0.7rem 1.1rem 0; flex-shrink:0;
+}
+.dp-eyebrow {
+  font-size:clamp(0.34rem,1.3vw,0.44rem); letter-spacing:0.14em;
+  text-transform:uppercase; color:rgba(244,114,182,0.45); margin-bottom:3px;
+}
+.dp-title {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(0.82rem,3.5vw,1.05rem); color:var(--pink);
+}
+.dp-close {
+  background:none; border:none; color:#3a4a68;
+  font-size:1.1rem; cursor:pointer;
+  padding:0 0 0 0.8rem; flex-shrink:0; align-self:flex-start;
+}
+.dp-tabs {
+  display:flex; border-bottom:1px solid rgba(244,114,182,0.1);
+  flex-shrink:0; margin-top:0.5rem;
+  overflow-x:auto; scrollbar-width:none;
+}
+.dp-tabs::-webkit-scrollbar { display:none; }
+.dp-tab {
+  background:none; border:none;
+  border-bottom:2px solid transparent; color:var(--text-mid);
+  font-family:'DM Mono',monospace;
+  font-size:clamp(0.34rem,1.4vw,0.48rem); letter-spacing:0.09em;
+  text-transform:uppercase; padding:0.32rem 0.7rem;
+  cursor:pointer; white-space:nowrap;
+  transition:color 0.2s,border-color 0.2s;
+}
+.dp-tab.active { color:var(--pink); border-bottom-color:var(--pink); }
+.dp-body {
+  flex:1; overflow-y:auto;
+  padding:0.65rem 1.1rem;
+  padding-bottom:calc(env(safe-area-inset-bottom,0px) + 0.65rem);
+  scrollbar-width:thin; scrollbar-color:#1e2838 transparent;
+}
+.dp-pane { display:none; }
+.dp-pane.active { display:block; }
+.dp-desc {
+  font-size:clamp(0.5rem,1.9vw,0.62rem); color:#5a6a88;
+  line-height:1.75; letter-spacing:0.02em; margin-bottom:0.6rem;
+}
+.dp-rule {
+  font-size:clamp(0.48rem,1.8vw,0.6rem);
+  color:rgba(244,114,182,0.5); line-height:1.7;
+  border-left:2px solid rgba(244,114,182,0.2);
+  padding-left:0.6rem; margin-bottom:0.55rem; font-style:italic;
+}
+.dp-list { list-style:none; }
+.dp-list li {
+  display:flex; gap:0.5rem; align-items:flex-start;
+  font-size:clamp(0.48rem,1.8vw,0.6rem); color:#5a6a88;
+  line-height:1.65; letter-spacing:0.02em; margin-bottom:0.3rem;
+}
+.dp-list li::before {
+  content:'▸'; color:var(--pink); opacity:0.55;
+  flex-shrink:0; margin-top:1px; font-size:0.5rem;
+}
+.dp-fields {
+  display:grid; grid-template-columns:1fr 1fr; gap:0.35rem 0.8rem;
+  margin-bottom:0.6rem;
+}
+.dp-field { }
+.dp-field-label {
+  font-size:clamp(0.3rem,1.1vw,0.4rem); letter-spacing:0.12em;
+  text-transform:uppercase; color:var(--text-dim);
+}
+.dp-field-val {
+  font-size:clamp(0.44rem,1.6vw,0.56rem); color:var(--text-body);
+  margin-top:1px;
+}
+.dp-mistake {
+  background:rgba(220,80,80,0.05); border:1px solid rgba(220,80,80,0.08);
+  border-radius:4px; padding:0.4rem 0.55rem; margin-bottom:0.38rem;
+}
+.dp-mistake strong {
+  display:block; font-size:clamp(0.44rem,1.6vw,0.54rem);
+  color:#9a7070; margin-bottom:2px; font-weight:500;
+}
+.dp-mistake p { font-size:clamp(0.44rem,1.6vw,0.55rem); color:#5a6a88; line-height:1.6; }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="back-link" href="index.html">Theme Map</a>
+  <div>
+    <div class="header-eyebrow">PRINCE2 · Change Theme</div>
+    <h1>Change <span>Control</span></h1>
+    <div class="header-sub">process flow · issue register · configuration · tap to explore</div>
+  </div>
+</header>
+
+<div class="toolbar" id="toolbar">
+  <button class="view-tab active" data-view="process">Change Process</button>
+  <button class="view-tab" data-view="register">Issue Register</button>
+  <button class="view-tab" data-view="config">Config Items</button>
+</div>
+
+<div class="main-wrap" id="mainWrap">
+
+  <!-- ══ PROCESS FLOW VIEW ══════════════════════════════════════════════════ -->
+  <div id="view-process">
+    <div class="type-legend">
+      <div class="type-pill"><div class="type-dot" style="background:#f472b6"></div>Request for Change (RFC)</div>
+      <div class="type-pill"><div class="type-dot" style="background:#fb923c"></div>Off-Specification</div>
+      <div class="type-pill"><div class="type-dot" style="background:#818cf8"></div>Problem / Concern</div>
+    </div>
+
+    <div class="section-heading">Change lifecycle <span>· tap any step</span></div>
+    <div class="flow-canvas">
+      <svg class="flow-svg" id="flowSvg"></svg>
+    </div>
+
+    <div class="budget-section">
+      <div class="section-heading">Change budget tracker <span>· Customer Portal project</span></div>
+      <div class="budget-bar-wrap">
+        <div class="budget-label">Total budget</div>
+        <div class="budget-track"><div class="budget-fill" style="width:100%;background:rgba(244,114,182,0.15)"></div></div>
+        <div class="budget-val">£85,000</div>
+      </div>
+      <div class="budget-bar-wrap">
+        <div class="budget-label">Approved RFCs</div>
+        <div class="budget-track"><div class="budget-fill" id="approvedFill" style="width:0%;background:rgba(52,211,153,0.5)"></div></div>
+        <div class="budget-val" id="approvedVal">£0</div>
+      </div>
+      <div class="budget-bar-wrap">
+        <div class="budget-label">Pending assess.</div>
+        <div class="budget-track"><div class="budget-fill" id="pendingFill" style="width:0%;background:rgba(245,158,11,0.4)"></div></div>
+        <div class="budget-val" id="pendingVal">£0</div>
+      </div>
+      <div class="budget-bar-wrap">
+        <div class="budget-label">Remaining</div>
+        <div class="budget-track"><div class="budget-fill" id="remainFill" style="width:100%;background:rgba(129,140,248,0.3)"></div></div>
+        <div class="budget-val" id="remainVal">£85,000</div>
+      </div>
+      <div class="budget-warn" id="budgetWarn" style="display:none">⚠ Change budget below 20% — escalate to Project Board</div>
+    </div>
+  </div>
+
+  <!-- ══ ISSUE REGISTER VIEW ══════════════════════════════════════════════ -->
+  <div id="view-register" style="display:none">
+    <div class="section-heading">Issue Register <span>· Customer Portal Modernisation · Stage 2</span></div>
+    <div class="register-controls" id="registerControls">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="RFC">RFC</button>
+      <button class="filter-btn" data-filter="Off-Spec">Off-Spec</button>
+      <button class="filter-btn" data-filter="Concern">Concern</button>
+      <button class="filter-btn" data-filter="open">Open only</button>
+    </div>
+    <div class="register-table-wrap">
+      <table class="register-table" id="registerTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Type</th>
+            <th>Summary</th>
+            <th>Priority</th>
+            <th>Raised by</th>
+            <th>Status</th>
+            <th>Decision</th>
+            <th>Cost impact</th>
+          </tr>
+        </thead>
+        <tbody id="registerBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ CONFIG ITEMS VIEW ══════════════════════════════════════════════════ -->
+  <div id="view-config" style="display:none">
+    <div class="section-heading">Configuration Item Records <span>· tap any item</span></div>
+    <div class="ci-grid" id="ciGrid"></div>
+  </div>
+
+</div><!-- /main-wrap -->
+
+<!-- ── DETAIL PANEL ── -->
+<div class="detail-panel" id="detailPanel">
+  <div class="dp-head">
+    <div>
+      <div class="dp-eyebrow" id="dpEyebrow"></div>
+      <div class="dp-title" id="dpTitle"></div>
+    </div>
+    <button class="dp-close" id="dpClose">✕</button>
+  </div>
+  <div class="dp-tabs" id="dpTabs"></div>
+  <div class="dp-body" id="dpBody"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── PROCESS FLOW STEPS ────────────────────────────────────────────────────
+const FLOW_STEPS = [
+  {
+    id:'raise', label:'Issue Raised', sub:'Any team member',
+    color:'#818cf8', x:60, y:60,
+    eyebrow:'Step 1 · Entry Point',
+    desc:'Any member of the project team, a stakeholder, or a supplier can raise an issue at any time. The issue must be captured in the Issue Register immediately — before any assessment or action is taken. Raising an issue verbally without logging it is a governance failure.',
+    rule:'No issue may be acted upon before it is logged. The Issue Register is the single source of truth.',
+    bullets:['RFC — a proposed change to an approved baseline','Off-Specification — a product not meeting its Product Description','Problem / Concern — any other issue affecting the project'],
+    mistakes:[
+      {title:'Actioning before logging',body:'Teams often start work on a "quick fix" before the issue is formally raised. This destroys the baseline and creates undocumented scope changes.'},
+      {title:'Only logging big issues',body:'Every issue, regardless of perceived size, must be logged. Small issues accumulate into scope drift.'},
+    ],
+  },
+  {
+    id:'log', label:'Log in Issue Register', sub:'Project Manager',
+    color:'#f472b6', x:60, y:180,
+    eyebrow:'Step 2 · Registration',
+    desc:'The Project Manager logs the issue in the Issue Register with a unique ID, description, type, date raised, and who raised it. The issue is assigned a priority and an initial status of "New". No assessment has been done yet.',
+    rule:'Every issue gets a unique ID. The register is never edited retroactively to remove or change the original entry.',
+    bullets:['Assign unique issue ID (e.g. ISS-014)','Record: type, summary, date raised, raised by','Set initial status: New','Do not assess or decide at this stage — log first'],
+    mistakes:[
+      {title:'Merging issues',body:'Two separate issues should never be merged into one register entry. Each issue has its own lifecycle, owner, and cost impact.'},
+      {title:'Logging the solution, not the issue',body:'The register entry should describe the problem or request, not the proposed solution. The solution is determined during assessment.'},
+    ],
+  },
+  {
+    id:'assess', label:'Impact Assessment', sub:'Project Manager',
+    color:'#f472b6', x:60, y:300,
+    eyebrow:'Step 3 · Assessment',
+    desc:'The Project Manager assesses the full impact of the issue across all six tolerances: time, cost, scope, quality, risk, and benefits. For RFCs, this includes the cost of making the change. For Off-Specs, this includes the cost of fixing or accepting the deviation.',
+    rule:'Every RFC must be assessed for impact before any decision is made. Assessment is the PM\'s responsibility — not the Change Authority\'s.',
+    bullets:['Impact on time — will this affect the Stage Plan or Project Plan?','Impact on cost — what is the estimated cost of implementing this change?','Impact on scope — does this change the agreed baseline?','Impact on quality — does this affect any Product Descriptions?','Impact on risk — does this introduce new risks?','Impact on benefits — does this affect the Business Case?'],
+    mistakes:[
+      {title:'Assessment skipped for "minor" changes',body:'Every change must be assessed regardless of perceived size. Skipping assessment removes the Project Board\'s ability to make informed decisions.'},
+      {title:'Only cost assessed',body:'A change with zero cost impact can still affect scope, quality, or benefits significantly. All six tolerances must be considered.'},
+    ],
+  },
+  {
+    id:'decide', label:'Decision', sub:'Change Authority / Board',
+    color:'#38bdf8', x:60, y:430,
+    isDiamond:true,
+    eyebrow:'Step 4 · Decision Point',
+    desc:'The decision is made by whoever has authority at the assessed impact level. If the change is within the Change Authority\'s tolerances, they decide. If it exceeds those tolerances, it must be escalated to the full Project Board. The decision options are: Approve, Reject, Defer, or request more information.',
+    rule:'Only the Project Board can approve changes that exceed the Change Authority\'s tolerances. The Change Authority cannot self-authorise beyond its mandate.',
+    bullets:['Within CA tolerance → Change Authority decides','Exceeds CA tolerance → Escalate to Project Board','Decision options: Approve / Reject / Defer / Request more info','Decision and rationale must be recorded in the Issue Register'],
+    mistakes:[
+      {title:'Change Authority exceeding its mandate',body:'If the CA approves a change that exceeds its agreed tolerance, this is a governance breach. The Project Board must be involved.'},
+      {title:'Decision not recorded',body:'A verbal approval is not a decision. The outcome must be written into the Issue Register with a date and the approver\'s name.'},
+    ],
+  },
+  {
+    id:'approve', label:'Approved', sub:'Update plans & implement',
+    color:'#34d399', x:-100, y:570,
+    eyebrow:'Outcome · Approved',
+    desc:'An approved change is implemented. The Project Manager updates all affected documents — Stage Plan, Product Descriptions, and if significant, the Project Plan and Business Case. The change budget is debited. Configuration Item Records are updated to reflect the new baseline.',
+    rule:'An approved change must be reflected in updated plans before implementation begins. The new baseline replaces the old one.',
+    bullets:['Update Stage Plan with new activities and schedule','Update affected Product Descriptions','Debit the change budget by the approved cost','Update Configuration Item Records to new version','Communicate the change to affected team members'],
+    mistakes:[
+      {title:'Implementing before plans are updated',body:'Starting work on an approved change before the Stage Plan is updated means the project is running against an outdated baseline.'},
+      {title:'Forgetting to update the Product Description',body:'A change that affects what a product must do or look like must update its Product Description. Without this, quality reviews will assess against the wrong criteria.'},
+    ],
+  },
+  {
+    id:'reject', label:'Rejected', sub:'Log rationale & close',
+    color:'#ef4444', x:60, y:570,
+    eyebrow:'Outcome · Rejected',
+    desc:'A rejected change is closed in the Issue Register with the rationale recorded. The existing baseline is maintained. If the requester disagrees with the rejection, they may escalate through formal channels — but no work on the rejected change may begin.',
+    rule:'A rejection closes the issue. Work on the rejected change must not begin under any circumstances.',
+    bullets:['Record rejection rationale in the Issue Register','Set status to Closed (Rejected)','Communicate outcome to the requester','Baseline remains unchanged'],
+    mistakes:[
+      {title:'Implementing a rejected change informally',body:'Acting on a rejected change because "it\'s just a small thing" is a serious governance breach and destroys the integrity of the baseline.'},
+    ],
+  },
+  {
+    id:'defer', label:'Deferred', sub:'Log & monitor',
+    color:'#f59e0b', x:220, y:570,
+    eyebrow:'Outcome · Deferred',
+    desc:'A deferred change is held pending future review — usually because it is not urgent, the timing is wrong, or the change budget is low. It remains open in the Issue Register and must be reviewed at the next stage boundary.',
+    rule:'Deferred issues must be reviewed at every stage boundary. They cannot simply be forgotten.',
+    bullets:['Record deferral reason and review date','Status: Deferred (open)','Review at next stage boundary','If still not actioned at project closure, include in Follow-on Action Recommendations'],
+    mistakes:[
+      {title:'Deferred means forgotten',body:'Issues deferred without a review date are effectively abandoned. Every deferred issue must have a named review date in the register.'},
+    ],
+  },
+  {
+    id:'implement', label:'Implement & Update Baseline', sub:'Team Manager',
+    color:'#34d399', x:-100, y:700,
+    eyebrow:'Step 5 · Implementation',
+    desc:'The Team Manager implements the approved change within their Work Package. Once complete, the deliverable is submitted for quality review against the updated Product Description. The Configuration Item Record is updated to confirm the new baseline version is in place.',
+    rule:'Implementation only begins after plans and Product Descriptions have been updated. The Team Manager works to the updated baseline, not the original.',
+    bullets:['Implement within the authorised Work Package','Quality review against updated Product Description','Update Configuration Item Record to new version','Report completion to Project Manager via Checkpoint Report'],
+    mistakes:[
+      {title:'Implementing to the old Product Description',body:'If the Product Description was not updated before implementation, the team will build to the wrong specification and the quality review will fail.'},
+    ],
+  },
+  {
+    id:'close', label:'Issue Closed', sub:'Project Manager',
+    color:'#4a5878', x:-100, y:820,
+    eyebrow:'Step 6 · Closure',
+    desc:'Once the change is implemented and the quality review passed, the Project Manager closes the issue in the Issue Register. The register now reflects the complete history of the change — from raising to closure. This audit trail is reviewed at every stage boundary and at project closure.',
+    rule:'An issue is only closed when the change is fully implemented, quality-reviewed, and the baseline updated. Not when the decision is made.',
+    bullets:['Set status: Closed','Record implementation date and confirming quality review','Update change budget actual spend','Issue Register entry is now the permanent record of the change'],
+    mistakes:[
+      {title:'Closing before quality review',body:'Closing an issue when the change is "done" but before quality sign-off means the register does not reflect the true state of the product.'},
+    ],
+  },
+];
+
+// ── ISSUE REGISTER DATA ────────────────────────────────────────────────────
+const ISSUES = [
+  {
+    id:'ISS-001', type:'RFC', summary:'Add bulk export feature to reports module',
+    priority:'High', raisedBy:'Senior User', status:'Approved',
+    decision:'Approved by Change Authority', cost:'£8,400',
+    dateRaised:'Stage 2 Wk 1', dateDecided:'Stage 2 Wk 2',
+    impact:'Scope +3 days, Cost +£8,400, no risk/benefit impact',
+    rationale:'Directly supports CSAT benefit target. Within CA tolerance.',
+    configItem:'CI-004 Reports Module',
+    eyebrow:'RFC · ISS-001',
+    desc:'The Senior User requested a bulk export function for the reports module. Users currently export one record at a time, creating significant manual overhead. The RFC was assessed as within Change Authority tolerance and approved.',
+  },
+  {
+    id:'ISS-002', type:'Off-Spec', summary:'Mobile layout breaks below 360px viewport',
+    priority:'High', raisedBy:'QA Team', status:'Approved',
+    decision:'Fix mandated by Project Board', cost:'£3,200',
+    dateRaised:'Stage 2 Wk 3', dateDecided:'Stage 2 Wk 3',
+    impact:'Cost +£3,200, schedule +2 days. Quality risk if unresolved.',
+    rationale:'Product Description specifies mobile support. Not optional.',
+    configItem:'CI-002 Front-End Interface',
+    eyebrow:'Off-Specification · ISS-002',
+    desc:'The QA team identified that the portal layout fails on viewports below 360px. The Product Description mandates mobile compatibility with no screen-size restriction. This is an off-specification — the delivered product does not meet its agreed description.',
+  },
+  {
+    id:'ISS-003', type:'RFC', summary:'Integrate third-party live chat widget',
+    priority:'Medium', raisedBy:'Product Manager', status:'Rejected',
+    decision:'Rejected — out of scope', cost:'N/A',
+    dateRaised:'Stage 2 Wk 2', dateDecided:'Stage 2 Wk 4',
+    impact:'Scope expansion, £22,000 cost, introduces third-party data risk.',
+    rationale:'Not in approved baseline. Cost and risk exceed CA tolerance. Escalated to Board — rejected.',
+    configItem:'—',
+    eyebrow:'RFC · ISS-003',
+    desc:'A request to integrate a third-party live chat tool was raised. Impact assessment showed cost of £22,000, new data-sharing risks, and significant scope expansion. Escalated to the Project Board, who rejected it as outside the agreed baseline.',
+  },
+  {
+    id:'ISS-004', type:'Concern', summary:'Vendor velocity lower than planned in Stage Plan',
+    priority:'High', raisedBy:'Project Manager', status:'Open',
+    decision:'Under assessment', cost:'TBC',
+    dateRaised:'Stage 2 Wk 5', dateDecided:'—',
+    impact:'Potential 3-week delay to Stage 2 end date. May breach time tolerance.',
+    rationale:'Exception Report being prepared if 2-week threshold crossed.',
+    configItem:'—',
+    eyebrow:'Problem / Concern · ISS-004',
+    desc:'The PM has noted that vendor delivery velocity is running at 72% of the Stage Plan forecast. If this continues, Stage 2 will complete 3 weeks late — which would breach the time tolerance. An Exception Report is being prepared.',
+  },
+  {
+    id:'ISS-005', type:'RFC', summary:'Change password complexity rules to match new IT policy',
+    priority:'Low', raisedBy:'IT Security', status:'Approved',
+    decision:'Approved by Change Authority', cost:'£1,100',
+    dateRaised:'Stage 2 Wk 3', dateDecided:'Stage 2 Wk 4',
+    impact:'Minor code change. No schedule impact. Cost £1,100.',
+    rationale:'Mandatory compliance change. Approved without escalation.',
+    configItem:'CI-003 Authentication Module',
+    eyebrow:'RFC · ISS-005',
+    desc:'IT Security requested updated password complexity rules to align with a new corporate IT policy. The change is minor, mandatory, and well within Change Authority tolerances.',
+  },
+  {
+    id:'ISS-006', type:'Off-Spec', summary:'PDF export does not include company letterhead',
+    priority:'Medium', raisedBy:'Senior User', status:'Deferred',
+    decision:'Deferred to Stage 3', cost:'£2,800 est.',
+    dateRaised:'Stage 2 Wk 4', dateDecided:'Stage 2 Wk 5',
+    impact:'Low priority. Not blocking UAT. Scheduled for Stage 3 Work Package.',
+    rationale:'Product Description specifies letterhead. Deferred — not urgent. Review at Stage 2 boundary.',
+    configItem:'CI-005 PDF Export Engine',
+    eyebrow:'Off-Specification · ISS-006',
+    desc:'The PDF export module omits the company letterhead specified in its Product Description. The issue is not blocking UAT and has been deferred to Stage 3 with a review date at the Stage 2 boundary.',
+  },
+  {
+    id:'ISS-007', type:'RFC', summary:'Add dark mode toggle to user preferences',
+    priority:'Low', raisedBy:'UX Designer', status:'Rejected',
+    decision:'Rejected — enhancement, not fix', cost:'N/A',
+    dateRaised:'Stage 2 Wk 5', dateDecided:'Stage 2 Wk 5',
+    impact:'Not in baseline. Cosmetic enhancement. Low business value at this stage.',
+    rationale:'Nice-to-have. Not justified in current Business Case. Log for future project.',
+    configItem:'—',
+    eyebrow:'RFC · ISS-007',
+    desc:'A designer raised a request to add a dark mode toggle. The Change Authority assessed this as a cosmetic enhancement not included in the approved baseline and with no connection to the Business Case benefits. Rejected.',
+  },
+  {
+    id:'ISS-008', type:'Concern', summary:'Data migration script failing on legacy records pre-2015',
+    priority:'High', raisedBy:'Data Lead', status:'Open',
+    decision:'Under assessment', cost:'TBC',
+    dateRaised:'Stage 2 Wk 6', dateDecided:'—',
+    impact:'May affect 12% of customer records. Quality and schedule risk.',
+    rationale:'Root cause analysis in progress. Exception Report may follow.',
+    configItem:'CI-006 Data Migration',
+    eyebrow:'Problem / Concern · ISS-008',
+    desc:'The data migration script is failing on approximately 12% of legacy customer records (those created before 2015 in the old system). Root cause analysis is under way. If unresolved, this is likely to affect the UAT timeline.',
+  },
+];
+
+// ── CONFIG ITEMS ───────────────────────────────────────────────────────────
+const CONFIG_ITEMS = [
+  {
+    id:'CI-001', name:'Customer Portal — Frontend Shell',
+    version:'v3.2', status:'Approved Baseline',
+    owner:'Technical Lead', changeCount:1, hasChange:true, changeColor:'#34d399',
+    desc:'The outer shell application that hosts all portal modules. Version 3.2 is the approved baseline following Stage 1 architecture approval. A minor routing change was approved in Stage 2.',
+    attributes:['Platform: React 18 / TypeScript','Host: Azure Static Web Apps','Version control: Git (main branch protected)','Last quality review: Stage 2 Wk 3'],
+    history:['v1.0 — Initial build (Stage 1)','v2.0 — Architecture review approval (Stage 1)','v3.0 — Integration baseline (Stage 2 Wk 1)','v3.2 — Routing update (ISS-001 approved)'],
+  },
+  {
+    id:'CI-002', name:'Front-End Interface',
+    version:'v2.1', status:'Under Change',
+    owner:'UX Lead', changeCount:1, hasChange:true, changeColor:'#fb923c',
+    desc:'The visual interface layer including all screens, components, and responsive layout rules. Currently under change due to ISS-002 (mobile layout off-specification fix). The fix is in progress and will become v2.2 upon quality review sign-off.',
+    attributes:['Design system: Custom (PRINCE2 Portal DS)','Responsive breakpoints: 320px, 768px, 1024px','Accessibility: WCAG 2.1 AA','Last quality review: Stage 2 Wk 2 (partial — ISS-002 open)'],
+    history:['v1.0 — Wireframe acceptance (Stage 1)','v2.0 — High-fidelity prototype acceptance (Stage 1)','v2.1 — Build baseline (Stage 2 Wk 1)','v2.2 — Pending (ISS-002 fix)'],
+  },
+  {
+    id:'CI-003', name:'Authentication Module',
+    version:'v1.3', status:'Approved Baseline',
+    owner:'Security Engineer', changeCount:1, hasChange:true, changeColor:'#34d399',
+    desc:'Handles user login, session management, and password policies. Version 1.3 includes the mandatory IT Security password complexity update approved via ISS-005.',
+    attributes:['Auth method: OAuth 2.0 + MFA','Password policy: Corporate IT Standard v4.1 (updated)','Session timeout: 30 mins idle','Last quality review: Stage 2 Wk 4'],
+    history:['v1.0 — Initial build','v1.1 — MFA addition','v1.2 — Stage 2 baseline','v1.3 — Password policy update (ISS-005)'],
+  },
+  {
+    id:'CI-004', name:'Reports Module',
+    version:'v2.0', status:'Under Change',
+    owner:'Backend Lead', changeCount:1, hasChange:true, changeColor:'#f59e0b',
+    desc:'Generates all customer-facing and internal reports. Version 2.0 is in development to implement the bulk export feature approved via ISS-001. Expected to reach v2.0 baseline at end of Stage 2.',
+    attributes:['Output formats: PDF, CSV, XLSX','Report engine: Custom (Node.js)','Bulk export: In development (ISS-001)','Last quality review: Pending v2.0 completion'],
+    history:['v1.0 — Basic reports (Stage 1)','v1.1 — Stage 2 baseline','v2.0 — Bulk export (ISS-001, in progress)'],
+  },
+  {
+    id:'CI-005', name:'PDF Export Engine',
+    version:'v1.1', status:'Deferred Change',
+    owner:'Backend Lead', changeCount:1, hasChange:true, changeColor:'#f59e0b',
+    desc:'Generates PDF documents for customer use. Version 1.1 is the current baseline. The missing letterhead identified in ISS-006 is a deferred off-specification — the fix is scheduled for Stage 3.',
+    attributes:['Engine: Puppeteer (headless Chrome)','Templates: 4 standard templates','Letterhead: Missing (ISS-006 deferred)','Last quality review: Stage 2 Wk 4 (off-spec noted)'],
+    history:['v1.0 — Initial engine','v1.1 — Template update (Stage 2)','v1.2 — Letterhead fix pending (Stage 3)'],
+  },
+  {
+    id:'CI-006', name:'Data Migration',
+    version:'v0.8', status:'At Risk',
+    owner:'Data Lead', changeCount:1, hasChange:true, changeColor:'#ef4444',
+    desc:'The one-time data migration script to move customer records from the legacy system. Currently at risk due to ISS-008 — 12% of records are failing. Not yet at approved baseline status.',
+    attributes:['Source: Legacy CRM (Oracle)','Target: New portal database (PostgreSQL)','Records: ~84,000 customer accounts','Status: 88% passing, 12% at risk (ISS-008)'],
+    history:['v0.5 — First test run (Stage 2 Wk 2)','v0.7 — Post-audit clean (Stage 2 Wk 4)','v0.8 — Current (ISS-008 open)'],
+  },
+  {
+    id:'CI-007', name:'API Gateway',
+    version:'v1.0', status:'Approved Baseline',
+    owner:'Technical Lead', changeCount:0, hasChange:false, changeColor:'#34d399',
+    desc:'Routes all API calls between the portal front-end and backend services. Version 1.0 is the approved baseline with no open changes.',
+    attributes:['Gateway: Azure API Management','Endpoints: 34 (v1.0 baseline)','Auth: Bearer token (OAuth 2.0)','Last quality review: Stage 2 Wk 1 — passed'],
+    history:['v0.9 — Draft architecture','v1.0 — Approved baseline (Stage 2 Wk 1)'],
+  },
+  {
+    id:'CI-008', name:'Stage Plan — Stage 2',
+    version:'v1.2', status:'Under Review',
+    owner:'Project Manager', changeCount:1, hasChange:true, changeColor:'#fb923c',
+    desc:'The current Stage 2 Stage Plan. Under review following the vendor velocity concern raised in ISS-004. Version 1.3 will be issued if an Exception Plan is required.',
+    attributes:['Stage 2 planned duration: 18 weeks','Current forecast: 21 weeks (ISS-004)','Tolerances: ±2 weeks / ±£50K','Exception threshold: 3-week delay'],
+    history:['v1.0 — Stage 2 authorisation','v1.1 — Mid-stage update (Wk 3)','v1.2 — Current (ISS-004 impact pending)','v1.3 — Exception Plan version (if required)'],
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VIEW SWITCHING
+// ═══════════════════════════════════════════════════════════════════════════
+let currentView = 'process';
+
+document.getElementById('toolbar').addEventListener('click', e => {
+  const btn = e.target.closest('.view-tab');
+  if (!btn) return;
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  currentView = btn.dataset.view;
+  ['process','register','config'].forEach(v => {
+    document.getElementById('view-'+v).style.display = v === currentView ? '' : 'none';
+  });
+  closePanel();
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PROCESS FLOW
+// ═══════════════════════════════════════════════════════════════════════════
+function renderFlow() {
+  const svg = document.getElementById('flowSvg');
+
+  // Canvas: wide enough for 3 outcome columns + deferred loop on right
+  const W = 600, H = 960;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width', W);
+  svg.setAttribute('height', H);
+  svg.style.maxWidth = '100%';
+  svg.innerHTML = '';
+
+  // ── Defs: arrowhead markers ──────────────────────────────────────────────
+  const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+  const MARKERS = [
+    {id:'marr-blue',  color:'#b0c0ff'},
+    {id:'marr-green', color:'#34d399'},
+    {id:'marr-red',   color:'#ef4444'},
+    {id:'marr-amber', color:'#f59e0b'},
+    {id:'marr-grey',  color:'#4a5878'},
+  ];
+  MARKERS.forEach(({id,color}) => {
+    const m = document.createElementNS('http://www.w3.org/2000/svg','marker');
+    m.setAttribute('id', id);
+    m.setAttribute('markerWidth','7'); m.setAttribute('markerHeight','7');
+    m.setAttribute('refX','6'); m.setAttribute('refY','3');
+    m.setAttribute('orient','auto');
+    const p = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    p.setAttribute('points','0 0, 7 3, 0 6');
+    p.setAttribute('fill', color+'99');
+    m.appendChild(p); defs.appendChild(m);
+  });
+  svg.appendChild(defs);
+
+  // ── Layout constants ─────────────────────────────────────────────────────
+  const CX  = 300;   // centre x — middle of 600px canvas
+  const NW  = 155;   // node width — 3 cols of 155 fit in 600 with margins
+  const NH  = 44;    // node height
+  const NHW = NW/2;
+
+  // Explicit Y positions for each element
+  const Y = {
+    raise:    30,
+    log:      140,
+    assess:   250,
+    decide:   370,   // diamond centre y
+    // outcome row
+    outY:     510,
+    // approved sub-steps
+    implement:640,
+    close:    760,
+  };
+
+  // Outcome column centres
+  const X_APP  = 100;  // Approved  — left column centre
+  const X_REJ  = 300;  // Rejected  — centre column, directly under diamond
+  const X_DEF  = 500;  // Deferred  — right column centre
+
+  // ── Helper: straight or curved path ─────────────────────────────────────
+  function line(x1,y1,x2,y2,marker,color,dash='',curved=false) {
+    const el = document.createElementNS('http://www.w3.org/2000/svg','path');
+    let d;
+    if (curved) {
+      const midy = (y1+y2)/2;
+      d = `M ${x1} ${y1} C ${x1} ${midy}, ${x2} ${midy}, ${x2} ${y2}`;
+    } else {
+      d = `M ${x1} ${y1} L ${x2} ${y2}`;
+    }
+    el.setAttribute('d', d);
+    el.setAttribute('fill','none');
+    el.setAttribute('stroke', color+'60');
+    el.setAttribute('stroke-width','1.3');
+    if (dash) el.setAttribute('stroke-dasharray', dash);
+    el.setAttribute('marker-end', `url(#${marker})`);
+    svg.appendChild(el);
+  }
+
+  function txt(x,y,str,size,fill,anchor='middle',weight='400') {
+    const el = document.createElementNS('http://www.w3.org/2000/svg','text');
+    el.setAttribute('x',x); el.setAttribute('y',y);
+    el.setAttribute('font-size',size); el.setAttribute('font-family','DM Mono,monospace');
+    el.setAttribute('fill',fill); el.setAttribute('text-anchor',anchor);
+    el.setAttribute('font-weight',weight);
+    el.setAttribute('dominant-baseline','middle');
+    el.textContent = str;
+    svg.appendChild(el);
+    return el;
+  }
+
+  // ── Draw edges FIRST (under nodes) ───────────────────────────────────────
+
+  // Main vertical spine: raise → log → assess → decide
+  line(CX, Y.raise+NH,       CX, Y.log,           'marr-blue','#b0c0ff');
+  line(CX, Y.log+NH,         CX, Y.assess,         'marr-blue','#b0c0ff');
+  line(CX, Y.assess+NH,      CX, Y.decide-44,      'marr-blue','#b0c0ff');
+
+  // Decision → Approved (left diagonal then vertical)
+  const el1 = document.createElementNS('http://www.w3.org/2000/svg','path');
+  el1.setAttribute('d', `M ${CX-88} ${Y.decide} L ${X_APP} ${Y.decide} L ${X_APP} ${Y.outY}`);
+  el1.setAttribute('fill','none'); el1.setAttribute('stroke','#34d39960');
+  el1.setAttribute('stroke-width','1.3');
+  el1.setAttribute('marker-end','url(#marr-green)');
+  svg.appendChild(el1);
+
+  // Decision → Rejected (straight down)
+  line(CX, Y.decide+44, X_REJ, Y.outY, 'marr-red','#ef4444');
+
+  // Decision → Deferred (right diagonal then vertical)
+  const el2 = document.createElementNS('http://www.w3.org/2000/svg','path');
+  el2.setAttribute('d', `M ${CX+88} ${Y.decide} L ${X_DEF} ${Y.decide} L ${X_DEF} ${Y.outY}`);
+  el2.setAttribute('fill','none'); el2.setAttribute('stroke','#f59e0b60');
+  el2.setAttribute('stroke-width','1.3');
+  el2.setAttribute('marker-end','url(#marr-amber)');
+  svg.appendChild(el2);
+
+  // Approved → Implement → Close
+  line(X_APP, Y.outY+NH,     X_APP, Y.implement,   'marr-green','#34d399');
+  line(X_APP, Y.implement+NH, X_APP, Y.close,       'marr-grey','#4a5878');
+
+  // Deferred loop back to Log (goes right then up, outside the diagram)
+  const loopPath = document.createElementNS('http://www.w3.org/2000/svg','path');
+  loopPath.setAttribute('d',
+    `M ${X_DEF} ${Y.outY+NH} C ${X_DEF+55} ${Y.outY+NH+20}, ${X_DEF+55} ${Y.log+NH/2}, ${CX+NHW} ${Y.log+NH/2}`
+  );
+  loopPath.setAttribute('fill','none');
+  loopPath.setAttribute('stroke','rgba(245,158,11,0.22)');
+  loopPath.setAttribute('stroke-width','1');
+  loopPath.setAttribute('stroke-dasharray','3 4');
+  loopPath.setAttribute('marker-end','url(#marr-amber)');
+  svg.appendChild(loopPath);
+
+  // Loop label — rotated, placed in the right margin
+  const loopLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+  loopLbl.setAttribute('x', X_DEF+58);
+  loopLbl.setAttribute('y', (Y.outY+NH + Y.log+NH/2) / 2);
+  loopLbl.setAttribute('font-size','6.5');
+  loopLbl.setAttribute('font-family','DM Mono,monospace');
+  loopLbl.setAttribute('fill','rgba(245,158,11,0.28)');
+  loopLbl.setAttribute('text-anchor','middle');
+  loopLbl.setAttribute('transform',
+    `rotate(90, ${X_DEF+58}, ${(Y.outY+NH + Y.log+NH/2)/2})`
+  );
+  loopLbl.textContent = 'review at stage boundary';
+  svg.appendChild(loopLbl);
+
+  // Edge labels
+  txt(X_APP - 14, Y.decide + 8,   'Approve', '6.5', 'rgba(52,211,153,0.55)', 'end');
+  txt(X_REJ,      Y.decide + 56,  'Reject',  '6.5', 'rgba(239,68,68,0.55)',  'middle');
+  txt(X_DEF + 14, Y.decide + 8,   'Defer',   '6.5', 'rgba(245,158,11,0.55)', 'start');
+
+  // ── Draw nodes OVER edges ─────────────────────────────────────────────────
+  function node(id, x, y, w, h, color, label, sub, stepData, delay) {
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.classList.add('flow-node');
+    g.style.animationDelay = delay+'s';
+    g.style.cursor = 'pointer';
+    const r = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    r.setAttribute('x',x); r.setAttribute('y',y);
+    r.setAttribute('width',w); r.setAttribute('height',h);
+    r.setAttribute('rx','5'); r.setAttribute('ry','5');
+    r.setAttribute('fill',color+'1a'); r.setAttribute('stroke',color+'55');
+    r.setAttribute('stroke-width','1');
+    const t1 = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t1.setAttribute('x',x+w/2); t1.setAttribute('y',y+h/2-7);
+    t1.setAttribute('font-size','8.5'); t1.setAttribute('font-family','DM Mono,monospace');
+    t1.setAttribute('text-anchor','middle'); t1.setAttribute('dominant-baseline','middle');
+    t1.setAttribute('fill',color); t1.setAttribute('font-weight','500');
+    t1.textContent = label;
+    const t2 = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t2.setAttribute('x',x+w/2); t2.setAttribute('y',y+h/2+8);
+    t2.setAttribute('font-size','7'); t2.setAttribute('font-family','DM Mono,monospace');
+    t2.setAttribute('text-anchor','middle'); t2.setAttribute('dominant-baseline','middle');
+    t2.setAttribute('fill','rgba(255,255,255,0.28)');
+    t2.textContent = sub;
+    g.appendChild(r); g.appendChild(t1); g.appendChild(t2);
+    if (stepData) g.addEventListener('click', ev => { ev.stopPropagation(); openStepPanel(stepData); });
+    svg.appendChild(g);
+  }
+
+  function diamond(cx, cy, hw, hh, color, label, sub, stepData, delay) {
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.classList.add('flow-diamond');
+    g.style.animationDelay = delay+'s';
+    g.style.cursor = 'pointer';
+    const poly = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    poly.setAttribute('points',`${cx},${cy-hh} ${cx+hw},${cy} ${cx},${cy+hh} ${cx-hw},${cy}`);
+    poly.setAttribute('fill',color+'1a'); poly.setAttribute('stroke',color+'66');
+    poly.setAttribute('stroke-width','1');
+    const t1 = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t1.setAttribute('x',cx); t1.setAttribute('y',cy-8);
+    t1.setAttribute('font-size','8'); t1.setAttribute('font-family','DM Mono,monospace');
+    t1.setAttribute('text-anchor','middle'); t1.setAttribute('dominant-baseline','middle');
+    t1.setAttribute('fill',color); t1.setAttribute('font-weight','500');
+    t1.textContent = label;
+    const t2 = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t2.setAttribute('x',cx); t2.setAttribute('y',cy+8);
+    t2.setAttribute('font-size','7'); t2.setAttribute('font-family','DM Mono,monospace');
+    t2.setAttribute('text-anchor','middle'); t2.setAttribute('dominant-baseline','middle');
+    t2.setAttribute('fill','rgba(255,255,255,0.28)');
+    t2.textContent = sub;
+    g.appendChild(poly); g.appendChild(t1); g.appendChild(t2);
+    if (stepData) g.addEventListener('click', ev => { ev.stopPropagation(); openStepPanel(stepData); });
+    svg.appendChild(g);
+  }
+
+  // Main column nodes
+  const step = id => FLOW_STEPS.find(s=>s.id===id);
+  node('raise',   CX-NHW, Y.raise,      NW, NH, '#818cf8', 'Issue Raised',       'Any team member',          step('raise'),     0.05);
+  node('log',     CX-NHW, Y.log,        NW, NH, '#f472b6', 'Log in Issue Register','Project Manager',         step('log'),       0.10);
+  node('assess',  CX-NHW, Y.assess,     NW, NH, '#f472b6', 'Impact Assessment',  'Project Manager',           step('assess'),    0.15);
+  diamond(CX, Y.decide, 90, 44,          '#38bdf8', 'Decision',          'Change Authority / Board', step('decide'),    0.20);
+
+  // Outcome row
+  node('approve', X_APP-NHW, Y.outY,   NW, NH, '#34d399', 'Approved',            'Update plans & implement', step('approve'),   0.25);
+  node('reject',  X_REJ-NHW, Y.outY,   NW, NH, '#ef4444', 'Rejected',            'Log rationale & close',    step('reject'),    0.28);
+  node('defer',   X_DEF-NHW, Y.outY,   NW, NH, '#f59e0b', 'Deferred',            'Log & monitor',            step('defer'),     0.31);
+
+  // Approved continuation
+  node('implement', X_APP-NHW, Y.implement, NW, NH, '#34d399', 'Implement & Update', 'Team Manager',           step('implement'), 0.35);
+  node('close',     X_APP-NHW, Y.close,     NW, NH, '#4a5878', 'Issue Closed',       'Project Manager',         step('close'),     0.40);
+
+  // ── Budget bars ──────────────────────────────────────────────────────────
+  const total    = 85000;
+  const approved = ISSUES.filter(i=>i.status==='Approved'&&i.cost!=='N/A')
+    .reduce((s,i)=>s+parseInt(i.cost.replace(/[^0-9]/g,'')),0);
+  const pending  = ISSUES.filter(i=>i.status==='Open'&&i.cost==='TBC').length * 5000;
+  const remain   = total - approved;
+  const pct      = v => Math.min(100, Math.round(v/total*100));
+  setTimeout(() => {
+    document.getElementById('approvedFill').style.width = pct(approved)+'%';
+    document.getElementById('approvedVal').textContent  = '£'+approved.toLocaleString();
+    document.getElementById('pendingFill').style.width  = pct(pending)+'%';
+    document.getElementById('pendingVal').textContent   = '~£'+pending.toLocaleString();
+    document.getElementById('remainFill').style.width   = pct(remain)+'%';
+    document.getElementById('remainVal').textContent    = '£'+remain.toLocaleString();
+    if (remain/total < 0.25) document.getElementById('budgetWarn').style.display='';
+  }, 300);
+}
+
+function openStepPanel(step) {
+  const tabs = [
+    { id:'what', label:'What happens' },
+    { id:'pitfalls', label:'Pitfalls' },
+  ];
+  buildPanel(step.eyebrow, step.label, tabs, tab => {
+    if (tab === 'what') return `
+      <p class="dp-rule">${step.rule}</p>
+      <ul class="dp-list">${step.bullets.map(b=>`<li>${b}</li>`).join('')}</ul>`;
+    if (tab === 'pitfalls') return (step.mistakes||[]).map(m=>
+      `<div class="dp-mistake"><strong>⚠ ${m.title}</strong><p>${m.body}</p></div>`).join('');
+    return '';
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ISSUE REGISTER
+// ═══════════════════════════════════════════════════════════════════════════
+const TYPE_COLORS = { RFC:'#f472b6', 'Off-Spec':'#fb923c', Concern:'#818cf8' };
+const STATUS_COLORS = {
+  Approved:'#34d399', Rejected:'#ef4444', Deferred:'#f59e0b',
+  Open:'#818cf8', Closed:'#4a5878'
+};
+const PRIORITY_COLORS = { High:'#ef4444', Medium:'#f59e0b', Low:'#4a5878' };
+
+let activeFilter = 'all';
+
+function renderRegister(filter) {
+  activeFilter = filter;
+  const body = document.getElementById('registerBody');
+  let rows = ISSUES;
+  if (filter === 'RFC') rows = rows.filter(i=>i.type==='RFC');
+  else if (filter === 'Off-Spec') rows = rows.filter(i=>i.type==='Off-Spec');
+  else if (filter === 'Concern') rows = rows.filter(i=>i.type==='Concern');
+  else if (filter === 'open') rows = rows.filter(i=>i.status==='Open');
+
+  body.innerHTML = rows.map(issue => `
+    <tr data-id="${issue.id}">
+      <td style="color:var(--text-dim);white-space:nowrap">${issue.id}</td>
+      <td><span class="type-badge" style="color:${TYPE_COLORS[issue.type]||'#fff'};border-color:${TYPE_COLORS[issue.type]||'#fff'}44">${issue.type}</span></td>
+      <td style="color:var(--text-bright);max-width:180px">${issue.summary}</td>
+      <td><span class="priority-dot" style="background:${PRIORITY_COLORS[issue.priority]}88"></span>${issue.priority}</td>
+      <td>${issue.raisedBy}</td>
+      <td><span class="status-badge" style="color:${STATUS_COLORS[issue.status]||'#fff'};border-color:${STATUS_COLORS[issue.status]||'#fff'}44">${issue.status}</span></td>
+      <td style="max-width:140px;color:var(--text-mid)">${issue.decision}</td>
+      <td style="white-space:nowrap">${issue.cost}</td>
+    </tr>`).join('');
+
+  body.querySelectorAll('tr').forEach(tr => {
+    tr.addEventListener('click', () => {
+      body.querySelectorAll('tr').forEach(r=>r.classList.remove('active-row'));
+      tr.classList.add('active-row');
+      const issue = ISSUES.find(i=>i.id===tr.dataset.id);
+      openIssuePanel(issue);
+    });
+  });
+}
+
+document.getElementById('registerControls').addEventListener('click', e => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderRegister(btn.dataset.filter);
+  closePanel();
+});
+
+function openIssuePanel(issue) {
+  const tabs = [
+    { id:'overview', label:'Overview' },
+    { id:'impact',   label:'Impact assessment' },
+  ];
+  buildPanel(issue.eyebrow, issue.summary, tabs, tab => {
+    if (tab === 'overview') return `
+      <p class="dp-desc">${issue.desc}</p>
+      <div class="dp-fields">
+        <div class="dp-field"><div class="dp-field-label">Status</div><div class="dp-field-val"><span class="status-badge" style="color:${STATUS_COLORS[issue.status]};border-color:${STATUS_COLORS[issue.status]}44">${issue.status}</span></div></div>
+        <div class="dp-field"><div class="dp-field-label">Priority</div><div class="dp-field-val">${issue.priority}</div></div>
+        <div class="dp-field"><div class="dp-field-label">Raised by</div><div class="dp-field-val">${issue.raisedBy}</div></div>
+        <div class="dp-field"><div class="dp-field-label">Date raised</div><div class="dp-field-val">${issue.dateRaised}</div></div>
+        <div class="dp-field"><div class="dp-field-label">Decision date</div><div class="dp-field-val">${issue.dateDecided}</div></div>
+        <div class="dp-field"><div class="dp-field-label">Config item</div><div class="dp-field-val">${issue.configItem}</div></div>
+      </div>`;
+    if (tab === 'impact') return `
+      <div class="dp-fields" style="grid-template-columns:1fr">
+        <div class="dp-field"><div class="dp-field-label">Impact assessment</div><div class="dp-field-val" style="margin-top:4px">${issue.impact}</div></div>
+        <div class="dp-field" style="margin-top:0.5rem"><div class="dp-field-label">Decision rationale</div><div class="dp-field-val" style="margin-top:4px">${issue.rationale}</div></div>
+        <div class="dp-field" style="margin-top:0.5rem"><div class="dp-field-label">Cost impact</div><div class="dp-field-val" style="margin-top:4px;color:var(--pink)">${issue.cost}</div></div>
+      </div>`;
+    return '';
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CONFIG ITEMS
+// ═══════════════════════════════════════════════════════════════════════════
+function renderConfig() {
+  const grid = document.getElementById('ciGrid');
+  grid.innerHTML = CONFIG_ITEMS.map((ci,i) => `
+    <div class="ci-card" data-ci="${ci.id}" style="animation-delay:${i*0.04}s">
+      <div class="ci-id">${ci.id}</div>
+      <div class="ci-name">${ci.name}</div>
+      <div class="ci-version">${ci.version}</div>
+      <div class="ci-status-row">
+        <div class="ci-status">${ci.status}</div>
+        <div class="ci-change-indicator" style="background:${ci.changeColor}${ci.hasChange?'99':'33'}"></div>
+      </div>
+    </div>`).join('');
+
+  grid.querySelectorAll('.ci-card').forEach(card => {
+    card.addEventListener('click', () => {
+      grid.querySelectorAll('.ci-card').forEach(c=>c.classList.remove('active'));
+      card.classList.add('active');
+      const ci = CONFIG_ITEMS.find(c=>c.id===card.dataset.ci);
+      openCIPanel(ci);
+    });
+  });
+}
+
+function openCIPanel(ci) {
+  const tabs = [
+    { id:'details',  label:'Details' },
+    { id:'history',  label:'Version history' },
+  ];
+  buildPanel('Configuration Item · '+ci.id, ci.name, tabs, tab => {
+    if (tab === 'details') return `
+      <div class="dp-fields">
+        <div class="dp-field"><div class="dp-field-label">Current version</div><div class="dp-field-val">${ci.version}</div></div>
+        <div class="dp-field"><div class="dp-field-label">Status</div><div class="dp-field-val">${ci.status}</div></div>
+        <div class="dp-field"><div class="dp-field-label">Owner</div><div class="dp-field-val">${ci.owner}</div></div>
+      </div>
+      <p class="dp-desc" style="margin-top:0.5rem">${ci.desc}</p>
+      <ul class="dp-list">${ci.attributes.map(a=>`<li>${a}</li>`).join('')}</ul>`;
+    if (tab === 'history') return `
+      <ul class="dp-list">${ci.history.map(h=>`<li>${h}</li>`).join('')}</ul>`;
+    return '';
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GENERIC PANEL
+// ═══════════════════════════════════════════════════════════════════════════
+let activeTab = null;
+let panelRenderer = null;
+
+function buildPanel(eyebrow, title, tabs, renderer) {
+  document.getElementById('dpEyebrow').textContent = eyebrow;
+  document.getElementById('dpTitle').textContent   = title;
+  panelRenderer = renderer;
+
+  const tabsEl = document.getElementById('dpTabs');
+  tabsEl.innerHTML = tabs.map((t,i)=>
+    `<button class="dp-tab${i===0?' active':''}" data-tab="${t.id}">${t.label}</button>`
+  ).join('');
+  tabsEl.querySelectorAll('.dp-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabsEl.querySelectorAll('.dp-tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      activeTab = btn.dataset.tab;
+      document.getElementById('dpBody').innerHTML = `<div class="dp-pane active">${panelRenderer(activeTab)}</div>`;
+    });
+  });
+
+  activeTab = tabs[0].id;
+  document.getElementById('dpBody').innerHTML = `<div class="dp-pane active">${renderer(activeTab)}</div>`;
+  document.getElementById('detailPanel').classList.add('visible');
+}
+
+function closePanel() {
+  document.getElementById('detailPanel').classList.remove('visible');
+  document.querySelectorAll('.flow-node,.flow-diamond').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.ci-card,.active-row').forEach(n=>n.classList.remove('active','active-row'));
+}
+
+document.getElementById('dpClose').addEventListener('click', closePanel);
+document.getElementById('mainWrap').addEventListener('click', closePanel);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════════
+renderFlow();
+renderRegister('all');
+renderConfig();
+</script>
+</body>
+</html>

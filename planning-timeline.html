@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PRINCE2 · Plans Theme · Timeline</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
+
+  :root {
+    --bg: #090c12;
+    --grid-line: rgba(80,110,180,0.035);
+    --plans-color: #38bdf8;
+    --border-subtle: rgba(80,120,220,0.10);
+    --border-mid: rgba(80,120,220,0.18);
+    --text-dim: #2e3a52;
+    --text-mid: #4a5878;
+    --text-bright: #b0bcd0;
+    --panel-bg: #0d1120;
+  }
+
+  *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: var(--bg);
+    font-family: 'DM Mono', monospace;
+    color: var(--text-bright);
+    display: flex;
+    flex-direction: column;
+    touch-action: none;
+    user-select: none;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── HEADER ── */
+  header {
+    flex-shrink: 0;
+    text-align: center;
+    padding: calc(env(safe-area-inset-top,0px) + 10px) 1rem 6px;
+    position: relative; z-index: 2;
+  }
+  .header-eyebrow {
+    font-size: clamp(0.38rem,1.4vw,0.46rem);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 3px;
+  }
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(0.72rem,3vw,1rem);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  header h1 span { color: var(--plans-color); opacity: 0.7; }
+  .header-sub {
+    font-size: clamp(0.36rem,1.4vw,0.46rem);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #1e2636;
+    margin-top: 3px;
+  }
+
+  /* ── LEGEND BAR ── */
+  .legend-bar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 2px 12px;
+    padding: 4px 1rem;
+    border-bottom: 1px solid var(--border-subtle);
+    position: relative; z-index: 2;
+  }
+  .leg {
+    display: flex; align-items: center; gap: 5px;
+    font-size: clamp(0.34rem,1.3vw,0.46rem);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-mid);
+  }
+  .leg-swatch {
+    width: 20px; height: 4px; border-radius: 2px; flex-shrink: 0;
+  }
+  .leg-diamond {
+    width: 7px; height: 7px;
+    background: #f59e0b;
+    transform: rotate(45deg);
+    flex-shrink: 0;
+  }
+  .leg-circle {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    border: 1px solid #818cf8;
+    flex-shrink: 0;
+  }
+  .leg-wp {
+    width: 20px; height: 6px;
+    border-radius: 2px;
+    border: 1px solid rgba(56,189,248,0.4);
+    background: rgba(56,189,248,0.08);
+    flex-shrink: 0;
+  }
+
+  /* ── MAIN SCROLL AREA ── */
+  .scroll-wrap {
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: auto;
+    position: relative;
+    min-height: 0;
+    scrollbar-width: thin;
+    scrollbar-color: #1e2838 transparent;
+  }
+  .scroll-wrap::-webkit-scrollbar { width: 4px; height: 4px; }
+  .scroll-wrap::-webkit-scrollbar-thumb { background: #1e2838; border-radius: 2px; }
+
+  .timeline-root {
+    display: flex;
+    min-width: 900px;
+    min-height: 100%;
+    position: relative;
+  }
+
+  /* ── ROW LABELS ── */
+  .row-labels {
+    width: 160px;
+    flex-shrink: 0;
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    background: var(--bg);
+    padding-top: 38px; /* align with header row */
+  }
+  .row-label-group { margin-bottom: 0; }
+  .phase-label-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px 0 14px;
+    border-right: 1px solid var(--border-subtle);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .phase-label-cell:hover { background: rgba(56,189,248,0.03); }
+  .phase-color-bar {
+    width: 2px;
+    border-radius: 1px;
+    flex-shrink: 0;
+    align-self: stretch;
+  }
+  .phase-label-text {
+    font-size: clamp(0.42rem,1.5vw,0.54rem);
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .wp-label-cell {
+    display: flex;
+    align-items: center;
+    padding: 0 8px 0 24px;
+    border-right: 1px solid var(--border-subtle);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .wp-label-cell:hover { background: rgba(56,189,248,0.03); }
+  .wp-label-text {
+    font-size: clamp(0.36rem,1.3vw,0.46rem);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-mid);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ── GRID AREA ── */
+  .grid-area {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Month header row */
+  .month-header {
+    display: flex;
+    height: 38px;
+    border-bottom: 1px solid var(--border-mid);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--bg);
+  }
+  .month-cell {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid var(--border-subtle);
+    font-size: clamp(0.34rem,1.3vw,0.46rem);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    transition: color 0.3s;
+  }
+  .month-cell.current { color: var(--plans-color); opacity: 0.6; }
+
+  /* Rows */
+  .rows-wrap { position: relative; }
+
+  .phase-row {
+    display: flex;
+    position: relative;
+    border-bottom: 1px solid rgba(80,120,220,0.05);
+  }
+  .phase-row.phase-row-main {
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .wp-row {
+    display: flex;
+    position: relative;
+    border-bottom: 1px solid rgba(80,120,220,0.04);
+  }
+
+  .grid-cell {
+    flex-shrink: 0;
+    border-right: 1px solid rgba(80,120,220,0.04);
+    position: relative;
+  }
+  .grid-cell.month-start { border-right-color: rgba(80,120,220,0.09); }
+
+  /* Bars */
+  .bar-wrap {
+    position: absolute;
+    top: 50%; transform: translateY(-50%);
+    pointer-events: all;
+    cursor: pointer;
+  }
+
+  .phase-bar {
+    height: 18px;
+    border-radius: 3px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 0 7px;
+    transition: filter 0.2s, transform 0.15s;
+    overflow: hidden;
+  }
+  .phase-bar::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.07) 0%, transparent 60%);
+    border-radius: inherit;
+  }
+  .phase-bar:hover { filter: brightness(1.18); transform: translateY(-50%) scaleY(1.06); }
+  .phase-bar-label {
+    font-size: clamp(0.34rem,1.2vw,0.44rem);
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.85);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    position: relative;
+    z-index: 1;
+  }
+
+  .wp-bar {
+    height: 10px;
+    border-radius: 2px;
+    border: 1px solid;
+    transition: filter 0.2s;
+    position: relative;
+  }
+  .wp-bar::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, rgba(255,255,255,0.06) 0%, transparent 100%);
+    border-radius: inherit;
+  }
+  .wp-bar:hover { filter: brightness(1.25); }
+
+  /* Milestones */
+  .milestone {
+    position: absolute;
+    top: 50%; transform: translate(-50%, -50%) rotate(45deg);
+    width: 9px; height: 9px;
+    cursor: pointer;
+    transition: transform 0.18s, filter 0.18s;
+    z-index: 4;
+  }
+  .milestone:hover {
+    transform: translate(-50%, -50%) rotate(45deg) scale(1.5);
+    filter: brightness(1.3);
+  }
+
+  /* Stage gate circles */
+  .stage-gate {
+    position: absolute;
+    top: 50%; transform: translate(-50%, -50%);
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    border: 1.5px solid;
+    cursor: pointer;
+    background: var(--bg);
+    transition: transform 0.18s, filter 0.18s;
+    z-index: 4;
+  }
+  .stage-gate:hover {
+    transform: translate(-50%, -50%) scale(1.5);
+    filter: brightness(1.4);
+  }
+
+  /* Today line */
+  .today-line {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: rgba(56,189,248,0.3);
+    pointer-events: none;
+    z-index: 6;
+  }
+  .today-line::before {
+    content: 'TODAY';
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    font-size: 0.34rem;
+    letter-spacing: 0.12em;
+    color: var(--plans-color);
+    opacity: 0.5;
+  }
+
+  /* Vertical month separators */
+  .month-sep {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: rgba(80,120,220,0.07);
+    pointer-events: none;
+  }
+
+  /* ── DETAIL PANEL ── */
+  .detail-panel {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--panel-bg);
+    border-top: 1px solid var(--border-mid);
+    transform: translateY(100%);
+    transition: transform 0.32s cubic-bezier(0.32,0.72,0,1);
+    z-index: 100;
+    max-height: 46vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .detail-panel.visible { transform: translateY(0); }
+  .dp-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 0.7rem 1.1rem 0;
+    flex-shrink: 0;
+  }
+  .dp-type {
+    font-size: clamp(0.34rem,1.3vw,0.44rem);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-mid);
+    margin-bottom: 3px;
+  }
+  .dp-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(0.82rem,3.5vw,1.05rem);
+  }
+  .dp-dates {
+    font-size: clamp(0.38rem,1.5vw,0.5rem);
+    letter-spacing: 0.1em;
+    color: var(--text-mid);
+    margin-top: 3px;
+  }
+  .dp-close {
+    background: none; border: none;
+    color: #3a4a68; font-size: 1.1rem;
+    cursor: pointer; padding: 0 0 0 0.8rem;
+    flex-shrink: 0; align-self: flex-start;
+  }
+  .dp-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.6rem 1.1rem;
+    padding-bottom: calc(env(safe-area-inset-bottom,0px) + 0.6rem);
+    scrollbar-width: thin;
+    scrollbar-color: #1e2838 transparent;
+  }
+  .dp-desc {
+    font-size: clamp(0.5rem,1.9vw,0.62rem);
+    color: #5a6a88;
+    line-height: 1.75;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.6rem;
+  }
+  .dp-tags {
+    display: flex; flex-wrap: wrap; gap: 0.25rem;
+    margin-bottom: 0.55rem;
+  }
+  .dp-tag {
+    font-size: clamp(0.38rem,1.4vw,0.48rem);
+    letter-spacing: 0.07em;
+    padding: 0.14rem 0.4rem;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+    opacity: 0.55;
+  }
+  .dp-meta {
+    display: flex; flex-wrap: wrap; gap: 0.3rem 1.2rem;
+    font-size: clamp(0.36rem,1.4vw,0.48rem);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .dp-meta strong { color: #3e506a; font-weight: 500; }
+  .dp-deliverables {
+    list-style: none;
+    margin-top: 0.55rem;
+  }
+  .dp-deliverables li {
+    display: flex; gap: 0.5rem; align-items: flex-start;
+    font-size: clamp(0.48rem,1.8vw,0.58rem);
+    color: #5a6a88;
+    line-height: 1.6;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.3rem;
+  }
+  .dp-deliverables li::before {
+    content: '▸';
+    opacity: 0.55;
+    flex-shrink: 0;
+    margin-top: 1px;
+    font-size: 0.5rem;
+  }
+
+  /* Back link */
+  .back-link {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: clamp(0.36rem,1.4vw,0.48rem);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.2s;
+    white-space: nowrap;
+  }
+  .back-link:hover { color: var(--plans-color); }
+  .back-link::before { content: '←'; font-size: 0.7rem; }
+
+  /* Scroll hint */
+  .scroll-hint {
+    position: absolute;
+    right: 12px; bottom: 12px;
+    font-size: 0.38rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    pointer-events: none;
+    animation: fadeHint 3s ease 1.5s forwards;
+    opacity: 0;
+  }
+  @keyframes fadeHint {
+    0% { opacity:0; } 15% { opacity:1; } 80% { opacity:1; } 100% { opacity:0; }
+  }
+
+  /* Animate bars in */
+  .bar-animate {
+    clip-path: inset(0 100% 0 0);
+    animation: revealBar 0.7s cubic-bezier(0.22,1,0.36,1) forwards;
+  }
+  @keyframes revealBar {
+    to { clip-path: inset(0 0% 0 0); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="back-link" href="index.html">Theme Map</a>
+  <div class="header-eyebrow">PRINCE2 · Plans Theme</div>
+  <h1>Project <span>Timeline</span></h1>
+  <div class="header-sub">phases · work packages · milestones · tap to explore</div>
+</header>
+
+<div class="legend-bar">
+  <div class="leg"><div class="leg-swatch" style="background:rgba(56,189,248,0.55)"></div>Phase</div>
+  <div class="leg"><div class="leg-wp"></div>Work Package</div>
+  <div class="leg"><div class="leg-diamond"></div>Milestone</div>
+  <div class="leg"><div class="leg-circle"></div>Stage Gate</div>
+</div>
+
+<div class="scroll-wrap" id="scrollWrap">
+  <div class="timeline-root" id="timelineRoot">
+    <div class="row-labels" id="rowLabels"></div>
+    <div class="grid-area" id="gridArea">
+      <div class="month-header" id="monthHeader"></div>
+      <div class="rows-wrap" id="rowsWrap"></div>
+    </div>
+  </div>
+  <div class="scroll-hint">← scroll →</div>
+</div>
+
+<div class="detail-panel" id="detailPanel">
+  <div class="dp-head">
+    <div>
+      <div class="dp-type" id="dpType"></div>
+      <div class="dp-title" id="dpTitle"></div>
+      <div class="dp-dates" id="dpDates"></div>
+    </div>
+    <button class="dp-close" id="dpClose">✕</button>
+  </div>
+  <div class="dp-body">
+    <p class="dp-desc" id="dpDesc"></p>
+    <div class="dp-tags" id="dpTags"></div>
+    <div class="dp-meta" id="dpMeta"></div>
+    <ul class="dp-deliverables" id="dpDeliverables"></ul>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+// Timeline spans 12 months. Week = unit. 1 month ≈ 4.33 weeks. We use weeks 0–51.
+// Dates relative to project start = Week 0 = "Month 1 / Wk 1"
+
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const TOTAL_WEEKS = 52;
+const WEEK_PX = 26; // pixels per week
+
+const phases = [
+  {
+    id:'pre-project', label:'Pre-Project', shortLabel:'Pre-Project',
+    color:'#818cf8', start:0, end:3,
+    type:'phase',
+    desc:'Captures the trigger for the project, appoints the Executive and Project Manager, and produces the Project Brief. Confirms whether the project is viable enough to justify initiation.',
+    tags:['Mandate','Project Brief','Executive Appt'],
+    owner:'Corporate / Programme',
+    doc:'Project Brief',
+    deliverables:[
+      'Project mandate received and acknowledged',
+      'Executive and Project Manager formally appointed',
+      'Project Brief written: outline business case, approach, risks, tolerances',
+      'Initiation Stage Plan prepared',
+      'Project Board authorises the Initiation Stage',
+    ],
+    wps:[
+      { id:'wp-mandate', label:'Mandate & Brief', start:0, end:3, color:'#818cf8',
+        desc:'Capture the project mandate from corporate or programme management. Draft the outline Business Case and Project Brief. Confirm the Project Board membership.',
+        tags:['Mandate','Project Brief'],
+        effort:'Low', owner:'Executive + PM',
+        deliverables:['Project mandate documented','Project Brief approved','Project Board confirmed'],
+      },
+    ],
+    milestones:[
+      { id:'ms-pb-approved', label:'Project Brief Approved', week:3, color:'#f59e0b',
+        desc:'The Project Board formally approves the Project Brief and authorises the project to proceed to Initiation.',
+        tags:['Board Decision','Gate'],
+        impact:'High',
+      },
+    ],
+    gates:[],
+  },
+  {
+    id:'initiation', label:'Initiation', shortLabel:'Initiation',
+    color:'#38bdf8', start:3, end:9,
+    type:'phase',
+    desc:'Produces the Project Initiation Documentation (PID) — the definitive reference for the project. Covers all six management approaches, the Business Case, Project Plan, and governance structure. The Project Board authorises the project at the end of this stage.',
+    tags:['PID','Project Plan','Approaches','Risk Register'],
+    owner:'Project Manager',
+    doc:'Project Initiation Documentation (PID)',
+    deliverables:[
+      'All six management approaches documented and approved',
+      'Business Case fully developed and endorsed by the Executive',
+      'Project Plan baselined with stage boundaries defined',
+      'Risk Register, Issue Register, Quality Register, Lessons Log created',
+      'Communication Management Approach distributed to all stakeholders',
+      'Project Board authorises the project at End Initiation Review',
+    ],
+    wps:[
+      { id:'wp-pid', label:'Produce PID', start:3, end:7, color:'#38bdf8',
+        desc:'Compile the Project Initiation Documentation. Write all six management approaches (Quality, Risk, Change Control, Communication, Benefits, Tailoring). Develop the full Business Case and secure Executive sign-off.',
+        tags:['PID','Business Case','Approaches'],
+        effort:'High', owner:'Project Manager',
+        deliverables:['PID draft completed','Business Case approved by Executive','All six approaches signed off'],
+      },
+      { id:'wp-projplan', label:'Project Plan', start:5, end:9, color:'#38bdf8',
+        desc:'Develop the Project Plan using product-based planning. Create the Product Breakdown Structure and Product Flow Diagram. Estimate effort, schedule, and resources for all stages. Set tolerances.',
+        tags:['PBS','Product Flow','Tolerances'],
+        effort:'High', owner:'Project Manager',
+        deliverables:['Product Breakdown Structure completed','Product Flow Diagram created','Project Plan baselined'],
+      },
+      { id:'wp-registers', label:'Setup Registers', start:3, end:6, color:'#38bdf8',
+        desc:'Establish the five key management registers: Risk Register, Issue Register, Quality Register, Lessons Log, and Configuration Item Records.',
+        tags:['Risk Register','Quality Register','Issue Register'],
+        effort:'Medium', owner:'Project Manager + Support',
+        deliverables:['All registers initialised','Configuration baseline established'],
+      },
+    ],
+    milestones:[
+      { id:'ms-pid', label:'PID Approved', week:7, color:'#f59e0b',
+        desc:'The Project Initiation Documentation is formally approved by the Project Board. The project now has a controlled, agreed baseline.',
+        tags:['Board Decision','Baseline'],
+        impact:'Critical',
+      },
+    ],
+    gates:[
+      { id:'sg-initiation', label:'Initiation Gate', week:9, color:'#818cf8',
+        desc:'End of Initiation Stage Gate. The Project Board reviews the PID, Project Plan, and Business Case. Decision: authorise the project to proceed, request further information, or stop.',
+        tags:['Stage Gate','Board Review'],
+        decision:'Authorise / Stop / Request More',
+      },
+    ],
+  },
+  {
+    id:'stage1', label:'Stage 1 · Discovery & Design', shortLabel:'Stage 1',
+    color:'#34d399', start:9, end:22,
+    type:'phase',
+    desc:'Delivery Stage 1. Team Managers execute Work Packages under Project Manager authority. Focuses on discovery, requirements definition, architecture, and design products. Stage Plan controls all activities within agreed tolerances.',
+    tags:['Stage Plan','Work Packages','Checkpoint Reports','Highlight Reports'],
+    owner:'Project Manager + Team Managers',
+    doc:'Stage Plan 1 + Work Package Authorisations',
+    deliverables:[
+      'Requirements specification signed off by Senior User',
+      'Solution architecture approved by Senior Supplier',
+      'High-fidelity design prototypes accepted',
+      'Stage 1 Exception Reports raised where tolerances are threatened',
+      'End Stage Report produced and reviewed by Project Board',
+    ],
+    wps:[
+      { id:'wp-req', label:'Requirements', start:9, end:14, color:'#34d399',
+        desc:'Elicit, document, and validate functional and non-functional requirements with the Senior User. Produce Product Descriptions for all Stage 1 deliverables. Obtain formal sign-off from the Senior User.',
+        tags:['Requirements','Product Descriptions','Senior User'],
+        effort:'High', owner:'Business Analyst + Senior User',
+        deliverables:['Requirements specification v1.0','Product Descriptions for all Stage 1 products','Senior User sign-off obtained'],
+      },
+      { id:'wp-arch', label:'Architecture', start:13, end:19, color:'#34d399',
+        desc:'Define the technical architecture aligned with the approved requirements. Validate feasibility with the Senior Supplier. Document the architecture decision record and obtain approval at the quality review.',
+        tags:['Architecture','Senior Supplier','Feasibility'],
+        effort:'High', owner:'Technical Lead + Senior Supplier',
+        deliverables:['Architecture Decision Record','Technical feasibility confirmed','Senior Supplier approval'],
+      },
+      { id:'wp-design', label:'UX / Design', start:16, end:22, color:'#34d399',
+        desc:'Produce user experience flows, wireframes, and high-fidelity prototypes. Conduct usability reviews with representative users. Obtain formal acceptance from the Senior User before Stage 1 closes.',
+        tags:['UX','Prototypes','Acceptance'],
+        effort:'Medium', owner:'Design Team',
+        deliverables:['Wireframes','High-fidelity prototypes','Usability review report','Senior User acceptance'],
+      },
+    ],
+    milestones:[
+      { id:'ms-req-signoff', label:'Requirements Signed Off', week:14, color:'#f59e0b',
+        desc:'The Senior User formally accepts the requirements specification. This baseline is protected by change control — any subsequent change requires an RFC.',
+        tags:['Senior User','Baseline','Change Control'],
+        impact:'High',
+      },
+      { id:'ms-arch-approved', label:'Architecture Approved', week:19, color:'#f59e0b',
+        desc:'The Senior Supplier formally approves the technical architecture. No build activity may begin until this milestone is achieved.',
+        tags:['Senior Supplier','Technical Gate'],
+        impact:'High',
+      },
+    ],
+    gates:[
+      { id:'sg-stage1', label:'Stage 1 Gate', week:22, color:'#818cf8',
+        desc:'End of Stage 1 Gate. Project Board reviews the End Stage Report, updated Business Case and Risk Register. Authorises Stage 2 Stage Plan.',
+        tags:['Stage Gate','End Stage Review'],
+        decision:'Authorise Stage 2 / Exception Plan / Stop',
+      },
+    ],
+  },
+  {
+    id:'stage2', label:'Stage 2 · Build & Test', shortLabel:'Stage 2',
+    color:'#fb923c', start:22, end:40,
+    type:'phase',
+    desc:'Delivery Stage 2. Development and testing of all configured products. Quality Control is active throughout — products are checked against Product Descriptions before formal acceptance. Checkpoint Reports flow weekly to the Project Manager; Highlight Reports monthly to the Board.',
+    tags:['Build','Integration','Testing','Quality Control'],
+    owner:'Project Manager + Team Managers',
+    doc:'Stage Plan 2 + Quality Register + Checkpoint Reports',
+    deliverables:[
+      'All software components built to agreed Product Descriptions',
+      'Integration testing completed and defects resolved',
+      'User Acceptance Testing conducted with Senior User representation',
+      'Quality Register updated after every formal quality review',
+      'Performance testing completed and signed off by Senior Supplier',
+    ],
+    wps:[
+      { id:'wp-build-core', label:'Core Build', start:22, end:33, color:'#fb923c',
+        desc:'Build all core product components in iterative cycles. Each component must pass its quality review before being formally accepted. Defects raised as Issues and tracked to resolution in the Issue Register.',
+        tags:['Development','Quality Review','Issue Register'],
+        effort:'Very High', owner:'Development Team',
+        deliverables:['Core modules built and reviewed','Defect register maintained','Configuration baseline updated after each release'],
+      },
+      { id:'wp-integration', label:'Integration', start:30, end:37, color:'#fb923c',
+        desc:'Integrate all individual product components into the full solution. Identify and resolve integration defects. Update Configuration Item Records to reflect the integrated baseline.',
+        tags:['Integration','Configuration','Testing'],
+        effort:'High', owner:'Technical Lead + Dev Team',
+        deliverables:['Integration test plan executed','Integration defects resolved','Configuration records updated'],
+      },
+      { id:'wp-uat', label:'UAT', start:35, end:40, color:'#fb923c',
+        desc:'User Acceptance Testing conducted by user representatives nominated by the Senior User. All UAT defects logged as Issues. Sign-off required from the Senior User before Stage 2 can close.',
+        tags:['UAT','Senior User','Acceptance'],
+        effort:'High', owner:'Senior User + Test Team',
+        deliverables:['UAT test scripts executed','UAT defect log closed','Senior User formal acceptance'],
+      },
+    ],
+    milestones:[
+      { id:'ms-core-done', label:'Core Build Complete', week:33, color:'#f59e0b',
+        desc:'All core product components have passed quality review and been formally accepted. The project may proceed to integration.',
+        tags:['Quality Gate','Acceptance'],
+        impact:'High',
+      },
+      { id:'ms-uat-pass', label:'UAT Passed', week:40, color:'#f59e0b',
+        desc:'Senior User formally confirms that the product meets the agreed acceptance criteria. The project may proceed to closure planning.',
+        tags:['Senior User','Acceptance Criteria'],
+        impact:'Critical',
+      },
+    ],
+    gates:[
+      { id:'sg-stage2', label:'Stage 2 Gate', week:40, color:'#818cf8',
+        desc:'End of Stage 2 Gate. Project Board reviews the End Stage Report and confirms the product is ready for deployment and closure. Authorises the Closure Stage.',
+        tags:['Stage Gate','End Stage Review'],
+        decision:'Authorise Closure / Request Exception Plan',
+      },
+    ],
+  },
+  {
+    id:'closure', label:'Closure', shortLabel:'Closure',
+    color:'#f472b6', start:40, end:52,
+    type:'phase',
+    desc:'Formal closure of the project. Products are handed over to operational teams. All registers are archived. The End Project Report and Lessons Report are produced. The Project Board formally authorises closure.',
+    tags:['Handover','End Project Report','Lessons Report','Benefits Review'],
+    owner:'Project Manager + Executive',
+    doc:'End Project Report + Lessons Report + Follow-on Action Recommendations',
+    deliverables:[
+      'All products formally accepted and handed over to operational teams',
+      'End Project Report produced and approved by the Project Board',
+      'Lessons Report compiled from the Lessons Log and distributed',
+      'Follow-on Action Recommendations issued for outstanding items',
+      'Benefits review date scheduled and handed to Senior User',
+      'Project Board formally authorises project closure',
+    ],
+    wps:[
+      { id:'wp-deploy', label:'Deployment', start:40, end:45, color:'#f472b6',
+        desc:'Deploy the accepted product to the live environment. Confirm operational handover with the receiving team. Update all Configuration Item Records to reflect the production baseline.',
+        tags:['Deployment','Handover','Configuration'],
+        effort:'Medium', owner:'Operations Team + PM',
+        deliverables:['Product deployed to production','Operational handover confirmed','Config records updated to live baseline'],
+      },
+      { id:'wp-closure-docs', label:'Closure Documentation', start:44, end:50, color:'#f472b6',
+        desc:'Produce the End Project Report, Lessons Report, and Follow-on Action Recommendations. Archive all project registers. Schedule the post-project benefits review with the Senior User.',
+        tags:['End Project Report','Lessons Report','Benefits Review'],
+        effort:'Medium', owner:'Project Manager',
+        deliverables:['End Project Report draft','Lessons Report distributed','Follow-on Action Recommendations issued','Benefits review date confirmed'],
+      },
+      { id:'wp-training', label:'Training & Transition', start:42, end:48, color:'#f472b6',
+        desc:'Deliver training to all end users and support staff. Produce user documentation. Confirm that the operational team has sufficient capability to support the product from day one of live running.',
+        tags:['Training','Documentation','Transition'],
+        effort:'Medium', owner:'Senior User + PM',
+        deliverables:['Training delivered to all user groups','User documentation completed','Operations support confirmed'],
+      },
+    ],
+    milestones:[
+      { id:'ms-go-live', label:'Go Live', week:45, color:'#f59e0b',
+        desc:'The product is live in the operational environment. The project has delivered its outputs. Benefits realisation now begins under the Senior User.',
+        tags:['Go Live','Handover'],
+        impact:'Critical',
+      },
+      { id:'ms-closure', label:'Project Closure', week:51, color:'#f59e0b',
+        desc:'The Project Board formally accepts the End Project Report and authorises project closure. All project resources are released. Benefits tracking passes to the Senior User.',
+        tags:['Board Decision','Final Gate'],
+        impact:'Critical',
+      },
+    ],
+    gates:[
+      { id:'sg-closure', label:'Closure Gate', week:52, color:'#818cf8',
+        desc:'Final project closure authority granted by the Project Board. The project is formally disbanded. Post-project benefits reviews are owned by the Senior User.',
+        tags:['Final Gate','Benefits Transfer'],
+        decision:'Authorise Closure',
+      },
+    ],
+  },
+];
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+const ROW_H_PHASE = 36;
+const ROW_H_WP    = 28;
+
+function weekToX(week) { return week * WEEK_PX; }
+function weeksToPx(weeks) { return weeks * WEEK_PX; }
+
+const monthHeader = document.getElementById('monthHeader');
+const rowsWrap    = document.getElementById('rowsWrap');
+const rowLabels   = document.getElementById('rowLabels');
+const gridArea    = document.getElementById('gridArea');
+const totalWidth  = TOTAL_WEEKS * WEEK_PX;
+
+// Month header
+const monthStarts = [];
+let wk = 0;
+MONTHS.forEach((m, mi) => {
+  const weeksInMonth = (mi === 1) ? 4 : 4; // approx 4 weeks per month
+  monthStarts.push(wk);
+  const cell = document.createElement('div');
+  cell.className = 'month-cell' + (mi === 3 ? ' current' : ''); // April highlighted as "current"
+  cell.style.width = (weeksInMonth * WEEK_PX) + 'px';
+  cell.style.minWidth = cell.style.width;
+  cell.textContent = m;
+  monthHeader.appendChild(cell);
+  // Month separator
+  const sep = document.createElement('div');
+  sep.className = 'month-sep';
+  sep.style.left = weekToX(wk) + 'px';
+  rowsWrap.appendChild(sep);
+  wk += weeksInMonth;
+});
+
+// Today line (week 14 — "currently in Stage 1 Discovery")
+const todayLine = document.createElement('div');
+todayLine.className = 'today-line';
+todayLine.style.left = weekToX(14) + 'px';
+rowsWrap.appendChild(todayLine);
+
+// Build rows
+let currentY = 0;
+const allInteractives = []; // {el, data, rect}
+
+phases.forEach((phase, pi) => {
+  // ── Phase label ──
+  const phaseH = ROW_H_PHASE;
+  const allWpsH = phase.wps.length * ROW_H_WP;
+  const totalPhaseGroupH = phaseH + allWpsH;
+
+  const phaseLabelCell = document.createElement('div');
+  phaseLabelCell.className = 'phase-label-cell';
+  phaseLabelCell.style.height = phaseH + 'px';
+  phaseLabelCell.style.marginTop = pi > 0 ? '0' : '0';
+  phaseLabelCell.innerHTML = `
+    <div class="phase-color-bar" style="background:${phase.color};height:${phaseH * 0.55}px"></div>
+    <span class="phase-label-text" style="color:${phase.color};opacity:0.8">${phase.shortLabel}</span>
+  `;
+  rowLabels.appendChild(phaseLabelCell);
+
+  // WP labels
+  phase.wps.forEach(wp => {
+    const wpLabelCell = document.createElement('div');
+    wpLabelCell.className = 'wp-label-cell';
+    wpLabelCell.style.height = ROW_H_WP + 'px';
+    wpLabelCell.innerHTML = `<span class="wp-label-text">↳ ${wp.label}</span>`;
+    rowLabels.appendChild(wpLabelCell);
+  });
+
+  // ── Phase row (grid) ──
+  const phaseRow = document.createElement('div');
+  phaseRow.className = 'phase-row phase-row-main';
+  phaseRow.style.height = phaseH + 'px';
+  // Grid cells
+  for (let w = 0; w < TOTAL_WEEKS; w++) {
+    const cell = document.createElement('div');
+    cell.className = 'grid-cell' + (w % 4 === 0 ? ' month-start' : '');
+    cell.style.width = WEEK_PX + 'px';
+    cell.style.height = phaseH + 'px';
+    phaseRow.appendChild(cell);
+  }
+
+  // Phase bar
+  const phaseBarWrap = document.createElement('div');
+  phaseBarWrap.className = 'bar-wrap';
+  phaseBarWrap.style.left = weekToX(phase.start) + 'px';
+  phaseBarWrap.style.width = weeksToPx(phase.end - phase.start) + 'px';
+  phaseBarWrap.style.top = '50%';
+  phaseBarWrap.style.transform = 'translateY(-50%)';
+
+  const phaseBar = document.createElement('div');
+  phaseBar.className = 'phase-bar bar-animate';
+  phaseBar.style.animationDelay = (pi * 0.12) + 's';
+  phaseBar.style.background = phase.color + '28';
+  phaseBar.style.border = `1px solid ${phase.color}55`;
+  phaseBar.style.width = '100%';
+  phaseBar.innerHTML = `<span class="phase-bar-label" style="color:${phase.color}">${phase.label}</span>`;
+  phaseBarWrap.appendChild(phaseBar);
+  phaseRow.appendChild(phaseBarWrap);
+
+  // Milestones on phase row
+  phase.milestones.forEach(ms => {
+    const mEl = document.createElement('div');
+    mEl.className = 'milestone';
+    mEl.style.left = weekToX(ms.week) + 'px';
+    mEl.style.top = '50%';
+    mEl.style.background = ms.color;
+    mEl.title = ms.label;
+    phaseRow.appendChild(mEl);
+    mEl.addEventListener('click', e => { e.stopPropagation(); showDetail('milestone', ms); });
+  });
+
+  // Stage gates on phase row
+  phase.gates.forEach(sg => {
+    const gEl = document.createElement('div');
+    gEl.className = 'stage-gate';
+    gEl.style.left = weekToX(sg.week) + 'px';
+    gEl.style.top = '50%';
+    gEl.style.borderColor = sg.color;
+    gEl.title = sg.label;
+    phaseRow.appendChild(gEl);
+    gEl.addEventListener('click', e => { e.stopPropagation(); showDetail('gate', sg); });
+  });
+
+  phaseBar.addEventListener('click', () => showDetail('phase', phase));
+  rowsWrap.appendChild(phaseRow);
+  currentY += phaseH;
+
+  // ── WP rows ──
+  phase.wps.forEach((wp, wi) => {
+    const wpRow = document.createElement('div');
+    wpRow.className = 'wp-row';
+    wpRow.style.height = ROW_H_WP + 'px';
+
+    for (let w = 0; w < TOTAL_WEEKS; w++) {
+      const cell = document.createElement('div');
+      cell.className = 'grid-cell' + (w % 4 === 0 ? ' month-start' : '');
+      cell.style.width = WEEK_PX + 'px';
+      cell.style.height = ROW_H_WP + 'px';
+      wpRow.appendChild(cell);
+    }
+
+    const wpBarWrap = document.createElement('div');
+    wpBarWrap.className = 'bar-wrap';
+    wpBarWrap.style.left = weekToX(wp.start) + 'px';
+    wpBarWrap.style.width = weeksToPx(wp.end - wp.start) + 'px';
+    wpBarWrap.style.top = '50%';
+    wpBarWrap.style.transform = 'translateY(-50%)';
+
+    const wpBar = document.createElement('div');
+    wpBar.className = 'wp-bar bar-animate';
+    wpBar.style.animationDelay = (pi * 0.12 + wi * 0.07 + 0.1) + 's';
+    wpBar.style.background = wp.color + '12';
+    wpBar.style.borderColor = wp.color + '50';
+    wpBar.style.width = '100%';
+    wpBar.style.height = '10px';
+    wpBarWrap.appendChild(wpBar);
+    wpRow.appendChild(wpBarWrap);
+
+    wpBar.addEventListener('click', e => { e.stopPropagation(); showDetail('wp', wp); });
+    rowsWrap.appendChild(wpRow);
+    currentY += ROW_H_WP;
+  });
+});
+
+// Set grid area total width
+rowsWrap.style.width = totalWidth + 'px';
+monthHeader.style.width = totalWidth + 'px';
+document.getElementById('timelineRoot').style.minWidth = (160 + totalWidth) + 'px';
+
+// ── DETAIL PANEL ──────────────────────────────────────────────────────────────
+const panel = document.getElementById('detailPanel');
+const dpType = document.getElementById('dpType');
+const dpTitle = document.getElementById('dpTitle');
+const dpDates = document.getElementById('dpDates');
+const dpDesc = document.getElementById('dpDesc');
+const dpTags = document.getElementById('dpTags');
+const dpMeta = document.getElementById('dpMeta');
+const dpDeliverables = document.getElementById('dpDeliverables');
+
+const typeLabels = { phase:'Phase', wp:'Work Package', milestone:'Milestone', gate:'Stage Gate' };
+const typeColors = { phase:'#38bdf8', wp:'#38bdf8', milestone:'#f59e0b', gate:'#818cf8' };
+
+function weekLabel(w) {
+  const mo = Math.floor(w / 4);
+  const wk = (w % 4) + 1;
+  return `${MONTHS[Math.min(mo, 11)]} Wk ${wk}`;
+}
+
+function showDetail(type, data) {
+  dpType.textContent = typeLabels[type] || type;
+  dpType.style.color = typeColors[type] || '#38bdf8';
+  dpTitle.textContent = data.label || data.name || '';
+  dpTitle.style.color = data.color || typeColors[type];
+
+  // Dates
+  if (data.start !== undefined && data.end !== undefined) {
+    dpDates.textContent = `${weekLabel(data.start)} → ${weekLabel(data.end)}  ·  ${data.end - data.start} weeks`;
+  } else if (data.week !== undefined) {
+    dpDates.textContent = weekLabel(data.week);
+  } else {
+    dpDates.textContent = '';
+  }
+
+  dpDesc.textContent = data.desc || '';
+
+  // Tags
+  dpTags.innerHTML = (data.tags || []).map(t =>
+    `<span class="dp-tag" style="color:${data.color || typeColors[type]};border-color:${data.color || typeColors[type]}">${t}</span>`
+  ).join('');
+
+  // Meta
+  const metas = [];
+  if (data.owner) metas.push(`<span><strong>Owner:</strong> ${data.owner}</span>`);
+  if (data.effort) metas.push(`<span><strong>Effort:</strong> ${data.effort}</span>`);
+  if (data.doc) metas.push(`<span><strong>Key doc:</strong> ${data.doc}</span>`);
+  if (data.impact) metas.push(`<span><strong>Impact:</strong> ${data.impact}</span>`);
+  if (data.decision) metas.push(`<span><strong>Decision:</strong> ${data.decision}</span>`);
+  dpMeta.innerHTML = metas.join('');
+
+  // Deliverables
+  const items = data.deliverables || [];
+  dpDeliverables.innerHTML = items.map(d => `<li>${d}</li>`).join('');
+
+  panel.classList.add('visible');
+}
+
+document.getElementById('dpClose').addEventListener('click', () => {
+  panel.classList.remove('visible');
+});
+
+// Tap outside panel to close
+document.getElementById('scrollWrap').addEventListener('click', () => {
+  panel.classList.remove('visible');
+});
+
+// Scroll to "current" position (week 14) on load
+const scrollWrap = document.getElementById('scrollWrap');
+setTimeout(() => {
+  scrollWrap.scrollLeft = Math.max(0, weekToX(10) - 60);
+}, 300);
+</script>
+</body>
+</html>
